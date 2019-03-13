@@ -1,0 +1,140 @@
+---
+title: "FISTA implementation on R"
+author: "Luis Miguel Calvo Magaz + Adrián Poncela Gómez"
+date: "13/3/2019"
+output: html_document
+---
+## INTRODUCCIÓN
+Tengo que desarrollar un algoritmo eficiente que resuelta el problema LASSO, es decir, quiero encontrar el:  $$min_{\beta\in\mathbb{R}^p}(L(\beta)),\;L(\beta) =  \|Y-X\beta\|^2_2 + \lambda\|\beta\|_1$$
+El algoritmo *Fast Iterative Shrinkage-Thresholding Algorithm* (**FISTA**) es un algoritmo muy eficiente que resuelve problemas de optimización mediante la norma $l_1$.  
+Es un buen algoritmo para resolver el problema LASSO.  
+El algoritmo FISTA es una mejora del algoritmo **ISTA** (*Iterative Shrinkage-Thresholding Algorithm*) que consiste en reemplazar un problema de difícil minimización por una secuencia de problemas más sencillos mediante un método de Descenso de Gradiante que dice que si f es convexa y diferenciable en x:
+$$f(y)\simeq f(x) + \nabla f(x)(y-x) $$ 
+Si $y=x+\gamma\;u,\;(\|u\| = 1)\;,\;f(y)\simeq f(x) +\gamma\:\nabla f(x)\;u$ Entonces la dirección de descenso máximo sería:
+$$u = - \frac {\nabla f(x)} {\|\nabla f(x)\|} $$
+Método de descenso de gradiente: $$x_{n+1} = x_n -\gamma_n\nabla f(x_n)$$
+Este método puede adaptarse a problemas convexos que no sean suaves: $$min_x (f(x)+g(x))$$ donde $f$ $\beta$-suave y $g$ es convexa no diferenciable  $$x_{n+1} = argmin_x [g(x) + \frac \beta 2 \|x-(x_n - \frac 1 \beta \nabla f(x_n))||^2]$$
+Teorema:
+$$(f(x_n)+g(x_n)) - (f(\hat x)-g(\hat x))\leq \frac \beta {2n}\|x_1-\hat x\|^2 $$
+El *FISTA* mejora el *ISTA* con la aceleración de Nesterov utilizando los parámetros: $$\lambda_0 = 0,\;\lambda_n= \frac {1+\sqrt {1+4\lambda_{n-1}^2}} 2,\; \gamma_n=\frac {1-\lambda_n} {\lambda_{n+1}}$$
+$x_1 = y_1$ arbitrario
+$$y_{n+1}=argmin_x\; [g(x) + \frac \beta 2 \|x-(x_n - \frac 1 \beta \nabla f(x_n))||^2]$$
+$$x_{n+1} = (1-\gamma_n)y_{n+1}+\gamma\;y_n$$
+Teorema:
+$$(f(x_n)+g(x_n)) - (f(\hat x)-g(\hat x))\leq \frac {2\beta} {n^2}\|x_1-\hat x\|^2 $$
+**ISTA** converge al valor mínimo de la función $L(\beta)$ con una tasa de convergencia menor a $O(1/k)$.  
+Sin embargo se ha probado que existen métodos de gradiente con una tasa de razón de convergencia $O(1/k2)$ que, al igual que el método del gradiente clásico, no requieren más de una evaluación del gradiente en cada iteración, tan solo el uso de un m adicional elegido cuidadosamente y fácil de calcular (**FISTA**)
+
+Para $\|Y-X\beta\|^2_2 + \lambda\|\beta\|_1$ (Regresión Lasso) se puede aplicar el algoritmo *FISTA*
+$$\tau_{\frac \lambda \beta}(x_0)=argmin_{x}\; [\lambda|x| + \frac \beta 2 (x - x_0)^2]\; = (|x_0|-\frac \lambda \beta) +sgn(x)$$
+
+## Implementación del algoritmo FISTA para el problema LASSO - R:  
+
+### Función objetivo LASSO
+```{r , echo=TRUE}
+LassoObj <- function(beta,y,X,lambda){
+    return(minimos_cuadrados(beta,y,X) + lambda*sum(abs(beta)))
+}
+```
+### Funciones auxiliares
+```{r , echo=TRUE}
+prox <- function(x,lambda){
+  return((abs(x)-lambda)*(abs(x)-lambda > 0) * sign(x))
+}
+
+minimos_cuadrados <- function(mu,y,X){
+  X <- as.matrix(X)
+  return(mean((y - X%*%mu)^2))
+}
+
+minimos_cuadrados_grad <- function(mu,y,X){
+  X <- as.matrix(X)
+  df <- as.vector(-2*(t(y - X%*%mu)%*%X) / nrow(X))
+  return(df)
+}
+```
+### FISTA para el problema LASSO
+```{r , echo=TRUE}
+#' @param y vector of the dependent variable, normalizing it is a good idea.
+#' @param X Matrix of Covariates, quicker if normalized.
+#' @param lambda Overall penalty parameter.
+#' @return beta argmin of the function.
+#' @return value Value of the function at argmin.
+#' @return loss Value of mean squared error.
+#' @return l1norm l1-norm of beta.
+#' @return nbIter Number of iterations necessary for convergence.
+#' @return ConvergenceFISTA 0 if convergence, -555 if not.
+
+LassoFISTA <- function(y,X,lambda){
+  
+  beta_inicial=rep(0,ncol(X)) # Valores iniciales de los coeficientes beta.
+  W=rep(1,nrow(X)) # Vector de pesos de cada observación en la función objetivo por mínimos cuadrados
+  tolerancia=0.00001 # Tolerancia - Criteria de parada: Diferencias entre el valor de la función objetivo en 2 iteraciones consecutivas
+  maxIter=1000 # Máximo número de iteraciones permitidas para que converja
+  
+  # Ponderando las observaciones.
+  W <- as.vector(W)
+  y <- sqrt(W)*y
+  X <- diag(sqrt(W)) %*% as.matrix(X)
+  
+  ### Valores iniciales
+  L_inv <- 1/max(2*eigen(t(X)%*%X)$values/nrow(X))
+  theta <- 1
+  theta_anterior <- theta
+  beta <- beta_inicial
+  v <- beta
+  k <- 0 
+  # Algoritmo
+  repeat{
+    k <- k+1
+    theta_anterior <- theta
+    theta <- (1+sqrt(1+4*theta_anterior^2))/2
+    gamma <- (1-theta_anterior)/theta
+    beta_anterior <- beta
+    beta <- prox(v - L_inv*minimos_cuadrados_grad(v,y,X), lambda*L_inv)
+    v <- (1-gamma)*beta + gamma*beta_anterior
+    print(paste("Valor de la función objetivo en la iteración ",k,":",LassoObj(beta,y,X,lambda))) # Imprimimos el estado en cada iteración
+    # Si no converge, parar
+    if(is.na(LassoObj(beta,y,X,lambda) - LassoObj(beta_anterior,y,X,lambda))){
+      print("No hay convergencia")
+      break
+    } else if(sum(abs(LassoObj(beta,y,X,lambda)-LassoObj(beta_anterior,y,X,lambda))) < tolerancia || k > maxIter) break
+  }
+  if(k > maxIter){
+    print("SE HA LLEGADO AL NÚMERO MÁXIMO DE ITERACIONES Y NO HA CONVERGIDO")
+  } 
+  
+  return(list(beta=as.vector(beta)))
+}
+```
+### Prueba con datos simulados
+```{r , echo=TRUE}
+rYX<-function(n,p){
+  b0<- runif(p,min = -1,max = 1)
+  epsilon<-rnorm(n)
+  X<-matrix(rnorm(p*n),ncol=p)
+  Y<-X%*%b0+epsilon
+  return(list(X=X,y=Y,b0=b0))
+}
+dataset <- rYX(n=200,p=500)
+y <- dataset$y
+X <- dataset$X
+p <- ncol(X)
+n <- nrow(X)
+b0 <- dataset$b0
+
+c <- 1.1
+g <- 0.1/log(max(p,n))
+lambda <- c*qnorm(1-0.5*g/p)/sqrt(n)
+Lassofit <- LassoFISTA(y,X,lambda)
+```
+#### Error L1
+$$\sum|\beta_{Lasso} - \beta|$$
+```{r , echo=FALSE}
+sum(abs(Lassofit$beta-dataset$b0))
+```
+#### Error L2
+$$\sum(\beta_{Lasso} - \beta)^2$$
+```{r , echo=FALSE}
+sum((Lassofit$beta-dataset$b)^2)
+```
