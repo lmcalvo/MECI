@@ -69,7 +69,7 @@ LassoFISTA <- function(y,X,lambda){
   
   beta_inicial=rep(0,ncol(X)) # Valores iniciales de los coeficientes beta.
   W=rep(1,nrow(X)) # Vector de pesos de cada observación en la función objetivo por mínimos cuadrados
-  tolerancia=0.00001 # Tolerancia - Criteria de parada: Diferencias entre el valor de la función objetivo en 2 iteraciones consecutivas
+  tolerancia=0.00000001 # Tolerancia - Criteria de parada: Diferencias entre el valor de la función objetivo en 2 iteraciones consecutivas
   maxIter=1000 # Máximo número de iteraciones permitidas para que converja
   
   # Ponderando las observaciones.
@@ -108,7 +108,7 @@ LassoFISTA <- function(y,X,lambda){
 }
 ```
 ### Prueba con datos simulados
-```{r , echo=TRUE}
+```{r , echo=TRUE, message=FALSE}
 rYX<-function(n,p){
   b0<- runif(p,min = -1,max = 1)
   epsilon<-rnorm(n)
@@ -116,17 +116,21 @@ rYX<-function(n,p){
   Y<-X%*%b0+epsilon
   return(list(X=X,y=Y,b0=b0))
 }
-dataset <- rYX(n=200,p=500)
+dataset <- rYX(n=500,p=1000)
 y <- dataset$y
 X <- dataset$X
 p <- ncol(X)
 n <- nrow(X)
 b0 <- dataset$b0
 
-c <- 1.1
-g <- 0.1/log(max(p,n))
-lambda <- c*qnorm(1-0.5*g/p)/sqrt(n)
-Lassofit <- LassoFISTA(y,X,lambda)
+#Estimo lambda por validación cruzada con glmnet
+library(glmnet)
+lambda.opt<-cv.glmnet(X,y,family="gaussian",alpha=1,intercept=FALSE)$lambda.min # Menor de los lambdas por CV, el que sería el Lambda óptimo.
+```
+```{r , echo=TRUE}
+start.time <- Sys.time()
+Lassofit <- LassoFISTA(y,X,lambda.opt)
+end.time <- Sys.time()
 ```
 #### Error L1
 $$\sum|\beta_{Lasso} - \beta|$$
@@ -138,3 +142,10 @@ $$\sum(\beta_{Lasso} - \beta)^2$$
 ```{r , echo=FALSE}
 sum((Lassofit$beta-dataset$b)^2)
 ```
+# Error de predicción
+$$\textstyle \frac 1 n \|\tilde{Y}-\tilde{X}\hat{\beta}_{\mbox{lasso}}\|^2$$
+```{r , echo=FALSE}
+error_prediccion <- mean((y-X%*%Lassofit$beta)^2)
+```
+Un error de predicción de `r error_prediccion`, los datos tienen de límite inferior `r min(y)` y un limite superior de `r max(y)`.
+El tiempo de ejecución es de: `r (end.time-start.time)` segundos para `r n` observaciones y `r p` variables.

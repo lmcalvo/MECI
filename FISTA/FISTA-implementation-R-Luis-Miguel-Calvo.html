@@ -240,7 +240,7 @@ LassoFISTA &lt;- function(y,X,lambda){
   
   beta_inicial=rep(0,ncol(X)) # Valores iniciales de los coeficientes beta.
   W=rep(1,nrow(X)) # Vector de pesos de cada observación en la función objetivo por mínimos cuadrados
-  tolerancia=0.00001 # Tolerancia - Criteria de parada: Diferencias entre el valor de la función objetivo en 2 iteraciones consecutivas
+  tolerancia=0.00000001 # Tolerancia - Criteria de parada: Diferencias entre el valor de la función objetivo en 2 iteraciones consecutivas
   maxIter=1000 # Máximo número de iteraciones permitidas para que converja
   
   # Ponderando las observaciones.
@@ -257,7 +257,6 @@ LassoFISTA &lt;- function(y,X,lambda){
   k &lt;- 0 
   # Algoritmo
   repeat{
-    print(lambda)
     k &lt;- k+1
     theta_anterior &lt;- theta
     theta &lt;- (1+sqrt(1+4*theta_anterior^2))/2
@@ -288,224 +287,559 @@ LassoFISTA &lt;- function(y,X,lambda){
   Y&lt;-X%*%b0+epsilon
   return(list(X=X,y=Y,b0=b0))
 }
-dataset &lt;- rYX(n=200,p=500)
+dataset &lt;- rYX(n=500,p=1000)
 y &lt;- dataset$y
 X &lt;- dataset$X
 p &lt;- ncol(X)
 n &lt;- nrow(X)
 b0 &lt;- dataset$b0
 
-c &lt;- 1.1
-g &lt;- 0.1/log(max(p,n))
-lambda &lt;- c*qnorm(1-0.5*g/p)/sqrt(n)
-Lassofit &lt;- LassoFISTA(y,X,lambda)</code></pre>
-<pre><code>## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  1 : 71.1578794741013&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  2 : 53.0087255356895&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  3 : 45.1215101989722&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  4 : 41.3957634377626&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  5 : 39.4748484967793&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  6 : 38.2358971561727&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  7 : 37.36005479579&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  8 : 36.7138452748559&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  9 : 36.2039965473313&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  10 : 35.7679539089294&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  11 : 35.3703355250573&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  12 : 35.0204680874382&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  13 : 34.7067449171183&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  14 : 34.4653299529921&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  15 : 34.2614847030456&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  16 : 34.0881632268926&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  17 : 33.9528681491657&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  18 : 33.8350515762935&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  19 : 33.7276458426224&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  20 : 33.6317520242138&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  21 : 33.5404689158976&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  22 : 33.4581084616156&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  23 : 33.3823391434621&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  24 : 33.3145525102279&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  25 : 33.2541532441632&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  26 : 33.2021627751577&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  27 : 33.159284856546&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  28 : 33.1272158166793&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  29 : 33.1042015490369&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  30 : 33.0873049994924&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  31 : 33.0741440745365&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  32 : 33.0629579029597&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  33 : 33.0521532850221&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  34 : 33.0409764748873&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  35 : 33.0295038881776&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  36 : 33.0183705663819&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  37 : 33.0081715655145&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  38 : 32.9991400479311&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  39 : 32.9913217989939&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  40 : 32.9848212273344&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  41 : 32.9800988783621&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  42 : 32.9766345648668&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  43 : 32.9736208991275&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  44 : 32.9709239335554&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  45 : 32.9683826902653&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  46 : 32.965899976003&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  47 : 32.9634862657207&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  48 : 32.9610445106992&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  49 : 32.9586937056628&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  50 : 32.9564775207926&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  51 : 32.9544297431292&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  52 : 32.9525642772213&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  53 : 32.9510026589443&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  54 : 32.949948470916&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  55 : 32.9492617650472&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  56 : 32.9486901990832&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  57 : 32.9481385460983&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  58 : 32.9476294080633&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  59 : 32.9471357784998&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  60 : 32.9466673916369&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  61 : 32.9462210167328&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  62 : 32.9457743019337&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  63 : 32.9453163954093&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  64 : 32.9448515137315&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  65 : 32.944468975385&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  66 : 32.9441159324733&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  67 : 32.9437615722654&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  68 : 32.9434027189383&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  69 : 32.9430471915156&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  70 : 32.9427241349619&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  71 : 32.9424207929325&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  72 : 32.9421588651147&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  73 : 32.9419400795573&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  74 : 32.9417648448244&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  75 : 32.941630349251&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  76 : 32.9415294037655&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  77 : 32.9414515647228&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  78 : 32.9413852222139&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  79 : 32.9413199330958&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  80 : 32.9412482129304&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  81 : 32.9411680348418&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  82 : 32.9410775131884&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  83 : 32.9409776037622&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  84 : 32.9408725224674&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  85 : 32.9407666376773&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  86 : 32.9406632573181&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  87 : 32.9405646227079&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  88 : 32.9404721906118&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  89 : 32.9403868796493&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  90 : 32.9403091850527&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  91 : 32.9402392809078&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  92 : 32.9401772092962&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  93 : 32.9401228762937&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  94 : 32.9400759358513&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  95 : 32.9400447520912&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  96 : 32.9400273950404&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  97 : 32.9400166030215&quot;
-## [1] 0.3233736
-## [1] &quot;Valor de la función objetivo en la iteración  98 : 32.9400096788556&quot;</code></pre>
+#Estimo lambda por validación cruzada con glmnet
+library(glmnet)
+lambda.opt&lt;-cv.glmnet(X,y,family=&quot;gaussian&quot;,alpha=1,intercept=FALSE)$lambda.min # Menor de los lambdas por CV, el que sería el Lambda óptimo.</code></pre>
+<pre class="r"><code>start.time &lt;- Sys.time()
+Lassofit &lt;- LassoFISTA(y,X,lambda.opt)</code></pre>
+<pre><code>## [1] &quot;Valor de la función objetivo en la iteración  1 : 100.958892584922&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  2 : 56.8906453939152&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  3 : 35.7775841741211&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  4 : 25.445620660595&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  5 : 20.1457580181&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  6 : 17.2759154051004&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  7 : 15.6643027658246&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  8 : 14.7089548065529&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  9 : 14.1383271995833&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  10 : 13.7908593249883&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  11 : 13.5724189506672&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  12 : 13.4172618867078&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  13 : 13.2966606913565&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  14 : 13.1946947267223&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  15 : 13.1006987316304&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  16 : 13.0102495844866&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  17 : 12.9244260502483&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  18 : 12.8432387631805&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  19 : 12.7685999571916&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  20 : 12.698461507047&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  21 : 12.6307833853371&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  22 : 12.5685110702318&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  23 : 12.5087328840857&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  24 : 12.4510061932533&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  25 : 12.3942927064059&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  26 : 12.3395151681141&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  27 : 12.2881061099778&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  28 : 12.2423839257225&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  29 : 12.1992741899162&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  30 : 12.1559112220613&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  31 : 12.1138871585524&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  32 : 12.0735476590676&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  33 : 12.0342965185325&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  34 : 11.996311001404&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  35 : 11.9619417837837&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  36 : 11.9294352485572&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  37 : 11.8975693003867&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  38 : 11.8689387463842&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  39 : 11.8439105134308&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  40 : 11.8204661975885&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  41 : 11.7988608401594&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  42 : 11.7789978802227&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  43 : 11.7610511647489&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  44 : 11.7435530259104&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  45 : 11.7273943665393&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  46 : 11.712223535425&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  47 : 11.6968081893667&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  48 : 11.6814956625891&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  49 : 11.6684956142877&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  50 : 11.6559445763996&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  51 : 11.6438065756296&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  52 : 11.6327176419623&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  53 : 11.6231027857336&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  54 : 11.6139016993152&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  55 : 11.6047223541682&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  56 : 11.596581948331&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  57 : 11.5893979352769&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  58 : 11.5818251727915&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  59 : 11.5742773508146&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  60 : 11.5672526902096&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  61 : 11.5604745347383&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  62 : 11.5538930044262&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  63 : 11.5477233137402&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  64 : 11.5417208373263&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  65 : 11.535881235715&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  66 : 11.5305089305917&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  67 : 11.5253246730654&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  68 : 11.5202687049289&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  69 : 11.5153799206568&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  70 : 11.5106324577696&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  71 : 11.506024980181&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  72 : 11.5015288929888&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  73 : 11.4974244032208&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  74 : 11.4933657423435&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  75 : 11.489784616817&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  76 : 11.4862844090028&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  77 : 11.4828532841108&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  78 : 11.4795759389898&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  79 : 11.4764178871189&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  80 : 11.4732679157632&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  81 : 11.4701619982899&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  82 : 11.4671385810135&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  83 : 11.4642797208029&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  84 : 11.4616213385552&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  85 : 11.4591102525565&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  86 : 11.4567803760043&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  87 : 11.4546857462906&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  88 : 11.4526767001035&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  89 : 11.4510399371417&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  90 : 11.4493723506308&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  91 : 11.4477763667985&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  92 : 11.4461183638671&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  93 : 11.4444680604358&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  94 : 11.4428518386834&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  95 : 11.4412795873072&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  96 : 11.4398124925519&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  97 : 11.4385519054244&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  98 : 11.437378621684&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  99 : 11.4362328019887&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  100 : 11.435112741111&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  101 : 11.4340843848616&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  102 : 11.433125384733&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  103 : 11.4321685474488&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  104 : 11.431229206286&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  105 : 11.4303411098608&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  106 : 11.4294868444081&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  107 : 11.4286258966152&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  108 : 11.4277875677603&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  109 : 11.4269725760452&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  110 : 11.4261670469227&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  111 : 11.4254402497841&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  112 : 11.4247984447744&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  113 : 11.4242884156365&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  114 : 11.4238873409762&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  115 : 11.4234987028003&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  116 : 11.4231043539578&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  117 : 11.4226956925484&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  118 : 11.4222707179434&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  119 : 11.4218320172848&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  120 : 11.4213926925827&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  121 : 11.4209416688435&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  122 : 11.4204815389058&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  123 : 11.4200289185461&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  124 : 11.4196220520636&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  125 : 11.4192345521618&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  126 : 11.4188489152548&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  127 : 11.4184711627074&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  128 : 11.4180943060696&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  129 : 11.4177221345691&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  130 : 11.4173599155693&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  131 : 11.4170110004034&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  132 : 11.4166850512485&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  133 : 11.4163933396031&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  134 : 11.4161288879791&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  135 : 11.4158870429105&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  136 : 11.415677310192&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  137 : 11.4155030660679&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  138 : 11.4153715593784&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  139 : 11.415265980864&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  140 : 11.4151885882421&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  141 : 11.4151387373774&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  142 : 11.4151040936186&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  143 : 11.4150784838981&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  144 : 11.4150460209104&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  145 : 11.4149989329802&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  146 : 11.4149337734229&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  147 : 11.4148494658475&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  148 : 11.4147555848024&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  149 : 11.4146571023426&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  150 : 11.4145508704225&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  151 : 11.4144393240514&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  152 : 11.4143270675126&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  153 : 11.4142147441278&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  154 : 11.414103074345&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  155 : 11.4139925426555&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  156 : 11.4138822665711&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  157 : 11.4137725540439&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  158 : 11.4136619407517&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  159 : 11.4135488909897&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  160 : 11.413434972876&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  161 : 11.4133211582738&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  162 : 11.4132068678575&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  163 : 11.4130948645033&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  164 : 11.4129816560449&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  165 : 11.4128715066015&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  166 : 11.4127666537642&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  167 : 11.4126634411416&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  168 : 11.4125610818055&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  169 : 11.4124818925538&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  170 : 11.4124106427615&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  171 : 11.4123351865995&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  172 : 11.4122525150971&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  173 : 11.4121641123088&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  174 : 11.4120725903317&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  175 : 11.4119799139429&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  176 : 11.4118875402087&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  177 : 11.4117989599883&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  178 : 11.4117152022344&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  179 : 11.4116363445406&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  180 : 11.4115640946862&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  181 : 11.4115032713539&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  182 : 11.4114574747931&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  183 : 11.4114234081215&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  184 : 11.4113951718211&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  185 : 11.411370353884&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  186 : 11.4113491337209&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  187 : 11.411329177432&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  188 : 11.4113057031028&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  189 : 11.4112773814321&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  190 : 11.4112438564898&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  191 : 11.4112088851252&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  192 : 11.4111709141074&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  193 : 11.4111297881309&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  194 : 11.4110854915201&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  195 : 11.4110388789683&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  196 : 11.4109907524698&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  197 : 11.4109416897374&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  198 : 11.4108923815913&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  199 : 11.4108429622961&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  200 : 11.4107935982937&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  201 : 11.4107448793975&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  202 : 11.410698385344&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  203 : 11.4106553863163&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  204 : 11.41061499598&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  205 : 11.4105776591614&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  206 : 11.4105466132641&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  207 : 11.4105184440383&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  208 : 11.4104918355503&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  209 : 11.4104664199429&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  210 : 11.4104423115598&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  211 : 11.4104196293819&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  212 : 11.410397391729&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  213 : 11.4103754568879&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  214 : 11.4103540384785&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  215 : 11.4103335616711&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  216 : 11.4103149297766&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  217 : 11.4102977784156&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  218 : 11.4102818385946&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  219 : 11.4102667469583&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  220 : 11.4102520615284&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  221 : 11.4102373736906&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  222 : 11.4102225015653&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  223 : 11.4102068836166&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  224 : 11.4101909538348&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  225 : 11.4101739684636&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  226 : 11.4101556593243&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  227 : 11.4101354339083&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  228 : 11.4101131951825&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  229 : 11.4100891216511&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  230 : 11.4100636652799&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  231 : 11.4100372862539&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  232 : 11.4100107125643&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  233 : 11.409983816812&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  234 : 11.4099567095683&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  235 : 11.4099295916468&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  236 : 11.4099026552153&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  237 : 11.4098761127787&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  238 : 11.4098502104791&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  239 : 11.4098252145642&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  240 : 11.4098014128185&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  241 : 11.4097790615078&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  242 : 11.4097582660364&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  243 : 11.4097391052351&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  244 : 11.4097215573424&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  245 : 11.4097055588231&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  246 : 11.4096910031331&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  247 : 11.4096777582183&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  248 : 11.409665708004&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  249 : 11.409654646694&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  250 : 11.4096446985134&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  251 : 11.4096359481445&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  252 : 11.4096280990627&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  253 : 11.4096209204077&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  254 : 11.4096141039695&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  255 : 11.4096075214483&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  256 : 11.4096011217821&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  257 : 11.4095948819758&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  258 : 11.4095887961082&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  259 : 11.4095828771525&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  260 : 11.4095771522833&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  261 : 11.4095718029076&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  262 : 11.4095668156177&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  263 : 11.4095621440545&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  264 : 11.4095577805684&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  265 : 11.4095537065909&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  266 : 11.4095499466306&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  267 : 11.4095468802609&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  268 : 11.4095442384974&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  269 : 11.4095418330344&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  270 : 11.4095396025881&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  271 : 11.4095379909003&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  272 : 11.4095371989927&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  273 : 11.4095375533984&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  274 : 11.4095385322558&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  275 : 11.4095398503574&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  276 : 11.4095413587808&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  277 : 11.4095429398245&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  278 : 11.4095445009511&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  279 : 11.409545955327&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  280 : 11.4095472040129&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  281 : 11.4095481414317&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  282 : 11.4095486670796&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  283 : 11.4095486926802&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  284 : 11.4095481496538&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  285 : 11.4095469892052&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  286 : 11.4095451811581&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  287 : 11.4095426917222&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  288 : 11.409539501736&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  289 : 11.4095356132038&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  290 : 11.4095312000806&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  291 : 11.4095262141032&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  292 : 11.409520678031&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  293 : 11.4095146598224&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  294 : 11.4095081373017&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  295 : 11.4095011294885&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  296 : 11.4094939427248&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  297 : 11.409486997932&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  298 : 11.4094801167691&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  299 : 11.4094731603235&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  300 : 11.4094661249985&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  301 : 11.4094591223132&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  302 : 11.4094523561514&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  303 : 11.4094456887095&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  304 : 11.4094390666822&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  305 : 11.4094324818868&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  306 : 11.4094259388864&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  307 : 11.4094194494271&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  308 : 11.409413034006&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  309 : 11.4094067223523&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  310 : 11.4094006010634&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  311 : 11.4093947704393&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  312 : 11.4093891756461&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  313 : 11.4093838177216&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  314 : 11.4093787197141&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  315 : 11.4093739034438&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  316 : 11.4093693847059&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  317 : 11.4093651773636&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  318 : 11.40936129776&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  319 : 11.4093578368518&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  320 : 11.4093548032601&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  321 : 11.4093522107094&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  322 : 11.4093499838112&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  323 : 11.4093480435336&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  324 : 11.4093464253373&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  325 : 11.4093450680618&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  326 : 11.4093439758926&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  327 : 11.4093431638198&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  328 : 11.4093426954344&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  329 : 11.4093425697208&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  330 : 11.4093427233397&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  331 : 11.4093431151503&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  332 : 11.4093436986717&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  333 : 11.4093444266523&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  334 : 11.409345283379&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  335 : 11.4093462125364&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  336 : 11.4093471658224&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  337 : 11.4093481023774&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  338 : 11.4093489843058&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  339 : 11.4093497767685&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  340 : 11.4093504355828&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  341 : 11.4093509571698&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  342 : 11.4093513055645&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  343 : 11.4093514498753&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  344 : 11.409351389439&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  345 : 11.4093511271617&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  346 : 11.4093506673617&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  347 : 11.409350018534&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  348 : 11.4093491947411&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  349 : 11.4093482155797&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  350 : 11.4093471053678&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  351 : 11.4093458917816&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  352 : 11.4093446161544&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  353 : 11.4093433120612&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  354 : 11.4093419771512&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  355 : 11.409340630337&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  356 : 11.409339282327&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  357 : 11.4093380212768&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  358 : 11.4093367985361&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  359 : 11.4093355787239&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  360 : 11.4093343563696&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  361 : 11.4093331256071&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  362 : 11.4093318794276&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  363 : 11.4093306122844&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  364 : 11.4093293187282&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  365 : 11.4093279937294&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  366 : 11.4093266330336&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  367 : 11.4093252328681&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  368 : 11.4093237894671&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  369 : 11.4093222982406&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  370 : 11.4093207545494&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  371 : 11.4093191551878&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  372 : 11.4093175158979&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  373 : 11.4093158435454&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  374 : 11.4093141122261&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  375 : 11.4093123206424&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  376 : 11.409310476605&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  377 : 11.4093085891622&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  378 : 11.4093066668054&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  379 : 11.4093047176001&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  380 : 11.4093027495814&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  381 : 11.4093007820734&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  382 : 11.4092988824122&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  383 : 11.4092972328465&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  384 : 11.409295690177&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  385 : 11.4092942036103&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  386 : 11.4092927766422&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  387 : 11.4092914158512&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  388 : 11.4092901235031&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  389 : 11.4092889000673&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  390 : 11.4092877586972&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  391 : 11.4092867521064&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  392 : 11.4092858631566&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  393 : 11.4092851535991&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  394 : 11.4092845084133&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  395 : 11.4092838832777&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  396 : 11.4092832559277&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  397 : 11.409282608706&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  398 : 11.4092819293056&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  399 : 11.4092812102714&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  400 : 11.4092804486683&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  401 : 11.409279645336&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  402 : 11.4092788030887&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  403 : 11.4092779247481&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  404 : 11.4092770117651&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  405 : 11.4092760715027&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  406 : 11.4092751183766&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  407 : 11.4092741529765&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  408 : 11.4092731685707&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  409 : 11.409272165948&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  410 : 11.4092711485171&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  411 : 11.4092701214814&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  412 : 11.4092690913296&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  413 : 11.4092680650116&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  414 : 11.4092670491283&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  415 : 11.4092660496936&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  416 : 11.4092650718524&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  417 : 11.4092641195494&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  418 : 11.4092631951149&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  419 : 11.4092622985806&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  420 : 11.4092614282438&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  421 : 11.4092605812109&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  422 : 11.4092597536629&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  423 : 11.409258941313&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  424 : 11.409258140245&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  425 : 11.409257347583&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  426 : 11.4092565619424&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  427 : 11.4092557836188&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  428 : 11.4092550145&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  429 : 11.4092542577394&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  430 : 11.4092535172642&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  431 : 11.4092527972097&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  432 : 11.4092521013709&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  433 : 11.4092514327421&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  434 : 11.4092507931963&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  435 : 11.4092501833269&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  436 : 11.4092496024542&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  437 : 11.4092490487748&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  438 : 11.4092485195215&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  439 : 11.409248010785&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  440 : 11.4092475181569&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  441 : 11.4092470669231&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  442 : 11.4092466510511&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  443 : 11.4092462607544&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  444 : 11.4092458936231&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  445 : 11.4092455523251&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  446 : 11.4092452351799&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  447 : 11.4092449400584&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  448 : 11.4092446660304&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  449 : 11.4092444125151&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  450 : 11.4092441786671&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  451 : 11.4092439627107&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  452 : 11.4092438513366&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  453 : 11.4092438075394&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  454 : 11.409243756419&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  455 : 11.4092436837848&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  456 : 11.4092435866683&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  457 : 11.409243461565&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  458 : 11.4092433037073&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  459 : 11.4092431064378&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  460 : 11.4092428638978&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  461 : 11.4092425706871&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  462 : 11.409242221776&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  463 : 11.4092418128121&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  464 : 11.4092413407632&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  465 : 11.4092408046649&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  466 : 11.4092402061996&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  467 : 11.4092395499093&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  468 : 11.4092388429779&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  469 : 11.4092380946508&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  470 : 11.4092373154471&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  471 : 11.4092365163271&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  472 : 11.4092357079292&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  473 : 11.4092348999357&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  474 : 11.4092341005995&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  475 : 11.4092333164501&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  476 : 11.4092325521808&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  477 : 11.4092318106993&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  478 : 11.4092310933017&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  479 : 11.4092304023593&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  480 : 11.4092297385928&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  481 : 11.4092290961994&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  482 : 11.4092285105969&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  483 : 11.4092279673302&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  484 : 11.4092274470524&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  485 : 11.4092269715662&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  486 : 11.4092265338945&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  487 : 11.4092261125389&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  488 : 11.4092257031122&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  489 : 11.4092253108961&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  490 : 11.4092249269927&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  491 : 11.4092245434066&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  492 : 11.4092241540039&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  493 : 11.4092237545818&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  494 : 11.4092233430859&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  495 : 11.4092229194&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  496 : 11.4092224848397&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  497 : 11.4092220416106&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  498 : 11.4092215923775&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  499 : 11.4092211399552&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  500 : 11.4092206870881&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  501 : 11.4092202363034&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  502 : 11.4092197898333&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  503 : 11.4092193495908&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  504 : 11.409218917173&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  505 : 11.409218493878&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  506 : 11.4092180807419&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  507 : 11.4092176786082&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  508 : 11.4092172882356&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  509 : 11.4092169104297&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  510 : 11.4092165461719&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  511 : 11.4092161967207&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  512 : 11.4092158636658&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  513 : 11.409215548927&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  514 : 11.4092152546966&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  515 : 11.4092149833293&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  516 : 11.4092147371895&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  517 : 11.4092145184703&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  518 : 11.4092143290062&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  519 : 11.4092141696792&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  520 : 11.4092140489013&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  521 : 11.4092139622598&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  522 : 11.4092139046648&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  523 : 11.4092138743052&quot;
+## [1] &quot;Valor de la función objetivo en la iteración  524 : 11.4092138688235&quot;</code></pre>
+<pre class="r"><code>end.time &lt;- Sys.time()</code></pre>
 <div id="error-l1" class="section level4">
 <h4>Error L1</h4>
 <p><span class="math display">\[\sum|\beta_{Lasso} - \beta|\]</span></p>
-<pre><code>## [1] 221.4769</code></pre>
+<pre><code>## [1] 438.155</code></pre>
 </div>
 <div id="error-l2" class="section level4">
 <h4>Error L2</h4>
 <p><span class="math display">\[\sum(\beta_{Lasso} - \beta)^2\]</span></p>
-<pre><code>## [1] 144.3508</code></pre>
+<pre><code>## [1] 278.7545</code></pre>
 </div>
 </div>
+</div>
+<div id="error-de-prediccion" class="section level1">
+<h1>Error de predicción</h1>
+<p><span class="math display">\[\textstyle \frac 1 n \|\tilde{Y}-\tilde{X}\hat{\beta}_{\mbox{lasso}}\|^2\]</span></p>
+<p>Un error de predicción de 0.3088312, los datos tienen de límite inferior -59.4276234 y un limite superior de 70.417178. El tiempo de ejecución es de: 7.0494571 segundos para 500 observaciones y 1000 variables.</p>
 </div>
 
 
