@@ -1,0 +1,148 @@
+---
+title: "Algoritmo de Gibbs"
+author: "Luis Miguel Calvo Magaz and Adrián Poncela Gómez"
+date: "7 de marzo de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gdata)
+library(MASS)
+library(statmod)
+library(pscl)
+datos <- read.xls("DATOSejemploD.xlsx",sheet = 1,header = TRUE)
+tiempos<-c(8.0,15.0,22.0,29.0,36.0)
+```
+
+##Introducción
+Considera un modelo de regresión con efectos aleatorios para analizar los datos del ejemplo D
+(ratas.xls: contiene las observaciones del peso en 5 momentos del tiempo : 8,15.22.29 y 36 días).
+Considera que tanto el término independiente como el coeficiente de la variable explicativa
+(tiempo centrada) son a su vez variables aleatorias normales que dependen de hiperparámetros.
+
+## 1.- Describir el modelo en términos de los parámetros e hiperparámetros. Utiliza un modelo con errores normales independientes e igualmente distribuidos. 
+
+Modelo jerárquico normal:
+$$y_{ij}\;=\; Peso\;de\;la\;rata\;i\;en\;el\;día\;x_j\;,\;i\in\{1,2,...,30\}\;,\;x_j\in\{8,15,22,29,36\}$$
+$$x_j\;=\;Momento\;de\;tiempo\;j\;,\;j\in\{1,2,3,4,5\}\;,\;x_j\in\{8,15,22,29,36\}$$
+$$y_{ij} \sim Normal(\alpha_i + \beta_i·(x_j-\bar{x}) ,\;\sigma_y^2) + \epsilon_{ij}$$  
+donde:  
+
+$$\alpha_i \sim Normal(\mu_\alpha,\sigma_\alpha^2)$$
+$$\beta_i \sim Normal(\mu_\beta,\sigma_\beta^2)$$
+
+## Summary de los datos
+
+Medias:
+```{r, echo=FALSE,warning=FALSE}
+apply(datos, 2, mean)
+```
+
+Varianzas:
+```{r, echo=FALSE,warning=FALSE}
+apply(datos, 2, var)
+```
+
+## Implementación del Modelo jerárquico en R:
+
+```{r, echo=FALSE,warning=FALSE}
+datos <- datos[,-6]
+numero_observaciones =dim(datos)[1]; numero_variables = dim(datos)[2]
+numero_iteraciones<-11000
+alpha <- rep(1,30)
+beta <- rep(1,30)
+mu_alpha <- 1; mu_beta <- 1; sigma2_alpha <- 1; sigma2_beta <- 1; sigma2_y <- 1
+numero_parametros<-length(alpha)+length(beta)+5
+parametros<-matrix(rep(0,numero_parametros*numero_iteraciones),c(numero_iteraciones,numero_parametros))
+
+alpha_condicionada <- function(mu_alpha,sigma2_alpha,Y,beta,X){
+  n <- dim(Y)[1]
+  J <- dim(Y)[2]
+  media <- rep(0,n)
+  varianza <- rep(0,n)
+  for(i in 1:n){
+    media[i] <- (mu_alpha/sigma2_alpha) + (sum(Y[i,]-beta[i]%*%X)/sigma2_y)/((1/sigma2_alpha)+(J/sigma2_y))
+    varianza[i] <- 1/((1/sigma2_alpha)+(J/sigma2_y))
+  }
+  sigma =diag(varianza)
+  return(mvrnorm(1,mu=media,Sigma=sigma))
+}
+
+beta_condicionada <- function(mu_beta,sigma2_beta,Y,alpha,X){
+  n <- dim(Y)[1]
+  J <- dim(Y)[2]
+  media <- rep(0,n)
+  varianza <- rep(0,n)
+  for(i in 1:n){
+    sumatorio <- 0
+    for(j in 1:J){
+      sumatorio <- sumatorio+(Y[i,j]*X[j]-(beta[i]*X[j]))
+    }
+    media[i] <- (mu_beta/sigma2_beta) + ((sumatorio)/sigma2_y)/((1/sigma2_beta)+(sum(X^2)/sigma2_y))
+    varianza[i] <- 1/((1/sigma2_beta)+(sum(X^2)/sigma2_y))
+  }
+  sigma =diag(varianza)
+  return(mvrnorm(1,mu=media,Sigma=sigma))
+}
+
+sigma2_y_condicionada <- function(Y,alpha,beta,X){
+  n <- dim(Y)[1]
+  J <- dim(Y)[2]
+  media <- n*J/2
+  sumatorio <- 0
+  for(j in 1:J){
+    for(i in 1:n){
+      sumatorio <- sumatorio + (Y[i,j] - alpha[i] + beta[i]*X[j])^2
+    }
+  }
+  dispersion <- sumatorio/2
+  return(rinvgauss(1,media, dispersion))
+}
+
+sigma2_alpha_condicionada <- function(Y,alpha,mu_alpha){
+  n <- dim(Y)[1]
+  media <- n/2
+  sumatorio <- 0
+  for(i in 1:n){
+    sumatorio <- sumatorio + (alpha[i] - mu_alpha)^2
+  }
+  dispersion <- sumatorio/2
+  return(rinvgauss(1,media, dispersion))
+}
+
+sigma2_beta_condicionada <- function(Y,beta,mu_beta){
+  n <- dim(Y)[1]
+  media <- n/2
+  sumatorio <- 0
+  for(i in 1:n){
+    sumatorio <- sumatorio + (beta[i] - mu_beta)^2
+  }
+  dispersion <- sumatorio/2
+  return(rinvgauss(1,media, dispersion))
+}
+
+mu_alpha_condicionada <- function(Y,alpha,sigma2_alpha){
+  n <- dim(Y)[1]
+  media <- sum(alpha)/n
+  varianza <- sigma2_alpha/n
+  return(rnorm(1,media,sqrt(varianza)))
+}
+
+mu_beta_condicionada <- function(Y,beta,sigma2_beta){
+  n <- dim(Y)[1]
+  media <- sum(beta)/n
+  varianza <- sigma2_beta/n
+  return(rnorm(1,media,sqrt(varianza)))
+}
+
+new_alpha<-alpha_condicionada(mu_alpha,sigma2_alpha,datos,beta,tiempos)
+new_beta<-beta_condicionada(mu_beta,sigma2_beta,datos,alpha,tiempos)
+sigma2_y_condicionada(datos,alpha,beta,tiempos)
+sigma2_alpha_condicionada(datos,new_alpha,mu_alpha)
+sigma2_beta_condicionada(datos,new_beta,mu_beta)
+mu_alpha_condicionada(datos,alpha,sigma2_alpha)
+mu_beta_condicionada(datos,beta,sigma2_beta)
+
+```
+
