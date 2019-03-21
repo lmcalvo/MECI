@@ -9,10 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(gdata)
 library(MASS)
-library(statmod)
 library(pscl)
 datos <- read.xls("DATOSejemploD.xlsx",sheet = 1,header = TRUE)
+datos <- as.matrix(datos)
+datos <- datos[,-6]
 tiempos<-c(8.0,15.0,22.0,29.0,36.0)
+tiempos <- tiempos - mean(tiempos)
 ```
 
 ##Introducción
@@ -47,57 +49,50 @@ apply(datos, 2, var)
 ## Implementación del Modelo jerárquico en R:
 
 ```{r, echo=FALSE,warning=FALSE}
-datos <- datos[,-6]
 numero_observaciones =dim(datos)[1]; numero_variables = dim(datos)[2]
-numero_iteraciones<-11000
 alpha <- rep(1,30)
 beta <- rep(1,30)
 mu_alpha <- 1; mu_beta <- 1; sigma2_alpha <- 1; sigma2_beta <- 1; sigma2_y <- 1
-numero_parametros<-length(alpha)+length(beta)+5
-parametros<-matrix(rep(0,numero_parametros*numero_iteraciones),c(numero_iteraciones,numero_parametros))
 
-alpha_condicionada <- function(mu_alpha,sigma2_alpha,Y,beta,X){
-  n <- dim(Y)[1]
-  J <- dim(Y)[2]
-  media <- rep(0,n)
-  varianza <- rep(0,n)
-  for(i in 1:n){
-    media[i] <- (mu_alpha/sigma2_alpha) + (sum(Y[i,]-beta[i]%*%X)/sigma2_y)/((1/sigma2_alpha)+(J/sigma2_y))
-    varianza[i] <- 1/((1/sigma2_alpha)+(J/sigma2_y))
+alpha_condicionada <- function(mu_alpha,sigma2_alpha,peso,beta,tiempos){
+  J <- length(peso)
+  media <- 0
+  varianza <- 0
+  sumatorio <- 0
+  for(j in 1:J){
+      sumatorio <- sumatorio + (peso[j]-beta*tiempos[j])
   }
-  sigma =diag(varianza)
-  return(mvrnorm(1,mu=media,Sigma=sigma))
+  media <- (mu_alpha/sigma2_alpha) + (sumatorio/((1/sigma2_alpha)+(J/sigma2_y)))
+  varianza <- 1/((1/sigma2_alpha)+(J/sigma2_y))
+  return(rnorm(1,media,sqrt(varianza)))
 }
 
-beta_condicionada <- function(mu_beta,sigma2_beta,Y,alpha,X){
-  n <- dim(Y)[1]
-  J <- dim(Y)[2]
-  media <- rep(0,n)
-  varianza <- rep(0,n)
-  for(i in 1:n){
-    sumatorio <- 0
-    for(j in 1:J){
-      sumatorio <- sumatorio+(Y[i,j]*X[j]-(beta[i]*X[j]))
-    }
-    media[i] <- (mu_beta/sigma2_beta) + ((sumatorio)/sigma2_y)/((1/sigma2_beta)+(sum(X^2)/sigma2_y))
-    varianza[i] <- 1/((1/sigma2_beta)+(sum(X^2)/sigma2_y))
+beta_condicionada <- function(mu_beta,sigma2_beta,peso,alpha,tiempos){
+  J <- length(peso)
+  media <- 0
+  varianza <- 0
+  sumatorio <- 0
+  for(j in 1:J){
+    sumatorio <- sumatorio+(peso[j]*tiempos[j]-alpha*tiempos[j])
   }
-  sigma =diag(varianza)
-  return(mvrnorm(1,mu=media,Sigma=sigma))
+  media <- (mu_beta/sigma2_beta) + ((sumatorio)/sigma2_y)/((1/sigma2_beta)+(sum(tiempos^2)/sigma2_y))
+  varianza <- 1/((1/sigma2_beta)+(sum(tiempos^2)/sigma2_y))
+  return(rnorm(1,media,sqrt(varianza)))
 }
 
 sigma2_y_condicionada <- function(Y,alpha,beta,X){
   n <- dim(Y)[1]
   J <- dim(Y)[2]
   media <- n*J/2
-  sumatorio <- 0
+  sumatorio <- 0.0
   for(j in 1:J){
     for(i in 1:n){
       sumatorio <- sumatorio + (Y[i,j] - alpha[i] + beta[i]*X[j])^2
     }
   }
   dispersion <- sumatorio/2
-  return(rinvgauss(1,media, dispersion))
+  gamma_inversa <- rigamma(n=1,alpha = media,beta = dispersion)
+  return(gamma_inversa)
 }
 
 sigma2_alpha_condicionada <- function(Y,alpha,mu_alpha){
@@ -108,7 +103,8 @@ sigma2_alpha_condicionada <- function(Y,alpha,mu_alpha){
     sumatorio <- sumatorio + (alpha[i] - mu_alpha)^2
   }
   dispersion <- sumatorio/2
-  return(rinvgauss(1,media, dispersion))
+  gamma_inversa <- rigamma(n=1,alpha=media,beta =dispersion)
+  return(gamma_inversa)
 }
 
 sigma2_beta_condicionada <- function(Y,beta,mu_beta){
@@ -119,7 +115,8 @@ sigma2_beta_condicionada <- function(Y,beta,mu_beta){
     sumatorio <- sumatorio + (beta[i] - mu_beta)^2
   }
   dispersion <- sumatorio/2
-  return(rinvgauss(1,media, dispersion))
+  gamma_inversa <- rigamma(n=1,alpha=media,beta =dispersion)
+  return(gamma_inversa)
 }
 
 mu_alpha_condicionada <- function(Y,alpha,sigma2_alpha){
@@ -135,14 +132,43 @@ mu_beta_condicionada <- function(Y,beta,sigma2_beta){
   varianza <- sigma2_beta/n
   return(rnorm(1,media,sqrt(varianza)))
 }
-
-new_alpha<-alpha_condicionada(mu_alpha,sigma2_alpha,datos,beta,tiempos)
-new_beta<-beta_condicionada(mu_beta,sigma2_beta,datos,alpha,tiempos)
-sigma2_y_condicionada(datos,alpha,beta,tiempos)
-sigma2_alpha_condicionada(datos,new_alpha,mu_alpha)
-sigma2_beta_condicionada(datos,new_beta,mu_beta)
-mu_alpha_condicionada(datos,alpha,sigma2_alpha)
-mu_beta_condicionada(datos,beta,sigma2_beta)
-
+numero_iteraciones<-1000
+gibbs <- function(datos,tiempos,numero_iteraciones,alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta){
+  numero_parametros<-length(alpha)+length(beta)+5
+  parametros<-matrix(rep(0.00,numero_parametros*numero_iteraciones),c(numero_iteraciones,numero_parametros))
+  colnames(parametros)<-c(paste0("alpha",1:30),paste0("beta",1:30),"sigma_2_y","sigma2_alpha","sigma2_betas","mu_alpha","mu_beta")
+  parametros[1,] <- c(alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)
+  for(i in 1:numero_iteraciones){
+    for(j in 1:length(alpha)){
+      mu_alpha <- mu_alpha_condicionada(datos,alpha,sigma2_alpha)
+      mu_beta <- mu_beta_condicionada(datos,beta,sigma2_beta)
+      sigma2_y <- sigma2_y_condicionada(datos,alpha,beta,tiempos)
+      sigma2_alpha <- sigma2_alpha_condicionada(datos,alpha,mu_alpha)
+      sigma2_beta <- sigma2_beta_condicionada(datos,beta,mu_beta)
+      alpha[j] <- alpha_condicionada(mu_alpha,sigma2_alpha,datos[j,],beta[j],tiempos)
+      beta[j] <- beta_condicionada(mu_beta,sigma2_beta,datos[j,],alpha[j],tiempos)
+    }
+    parametros_nuevos <- c(alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)
+    parametros[i,] <- parametros_nuevos
+  }
+  return(parametros)
+}
+start.time <- Sys.time()
+params<-gibbs(datos,tiempos,numero_iteraciones,alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)
+end.time <- Sys.time()
+params <- params[101:1000,] #Descartamos las primeras cien
 ```
+El tiempo de ejecución es de: `r (end.time-start.time)` segundos para `r numero_iteraciones` iteraciones
 
+```{r, echo=FALSE,warning=FALSE}
+alphas <- params[,1:30]; betas <-params[,31:60]
+sigma2_ys <- params[,61];sigma2_alphas <- params[,62]; sigma2_betas <- params[,63]; mu_alphas <- params[,64]; mu_betas <- params[,65]
+print("BETAS")
+apply(betas, 2, mean)
+print("ALPHAS")
+apply(alphas, 2, mean)
+print("MU BETA")
+mean(mu_betas,2)
+print("MU ALPHA")
+mean(mu_alphas)
+```
