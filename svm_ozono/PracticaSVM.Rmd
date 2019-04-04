@@ -1,0 +1,183 @@
+---
+title: "Práctica: Predicción de niveles de ozono mediante SVM - 04/04/19"
+author: "Calvo Magaz Luis Miguel"
+output: html_document
+---
+
+
+El fichero 'ozone.dat' contiene mediciones de distintas magnitudes medioambientales. Los datos proceden de MétéoFrance. El objetivo de la práctica es predecir mediante SVM la ocurrencia de episodios de alto nivel de concentración de ozono. La información contenida en las distintas columnas del conjunto de datos es la siguiente:
+
+* JOUR: tipo de día; laborable (0) o no (1)
+
+* O3obs: concentración de ozono observada a las 17h (momento previsto de máxima polución)
+
+* MOCAGE: previsión de este nivel de contaminación obtenida por un modelo determinista
+
+* TEMPE: temperatura prevista por MétéoFrance a las 17h
+
+* RMH2O: medición de humedad
+
+* NO2: concentración de dióxido de nitrógeno
+
+* NO: concentración de monóxido de nitrógeno
+
+* STATION: lugar de observación (hay cinco estaciones diferentes)
+
+* VentMOD: fuerza del viento
+
+* VentANG: dirección del viento
+
+El objetivo de la práctica es usar SVM para predecir altos valores de concentración de ozono. Para ello puede ajustarse un modelo de regresión SVM con la variable O3obs como respuesta o, alternativamente, ajustar una regla de clasificación tomando como 
+**respuesta una variable binaria que separe valores 'altos' y 'bajos' de O3obs** (en este caso puedes tomar como valor de corte una concentración superior a 150 $\mu g m^{-3}$.
+
+Para comprobar la calidad de la regla producida se debe partir el conjunto de datos en dos partes ('ozonoentrenamiento.dat', 'ozonotest.dat') con proporciones, aproximadamente, del 80% y el 20% de los datos contenidos en 'ozone.dat'. Las reglas se deben ajustar a partir de los datos en'ozonoentrenamiento.dat'. Los demás datos se reservan para evaluar la calidad de las reglas ajustadas.
+
+Las reglas de clasificación SVM pueden ajustarse con la función ksvm de la librería kernlab. Tal como hemos estudiado las reglas SVM emplean un parámetro (a veces más de uno) de regularización. Puedes escribir tu propio código para elegir el parámetro de regularización más apropiado con validación cruzada. Alternativamente puedes sustituir la función ksvm de kernlab por la función svm de la librería e1071. Esta librería incluye la función tune.svm, que te puede ayudar a completar esta tarea.
+
+Puede ser aconsejable transformar algunas variables (variables de concentración como NO o NO2 se suelen usar en escala logarítmica)
+
+Las funciones svm o ksvm ajustan una regla de clasificación o un modelo de regresión en función del tipo de variable que se incluye como respuesta. Cuando la variable $y$ es numérica se ajusta una regresión. El problema de minimización es entonces
+$$\min_{\beta,\beta_0} \frac 1 2 \|\beta\|^2+C\sum_{i=1}^nV(y_i-(\beta_0+\beta^T x_i)),$$
+donde $V$ es una función de pérdida. La función de pérdida implementada por defecto para la regresión SVM (tanto en svm como en ksvm) es la llamada pérdida $\varepsilon$-insensible, es decir, la función $V(z)=|z|-\varepsilon$ si $|z|>\varepsilon$ con 
+$V(z)=0$ si $|z|\leq \varepsilon$. Puedes ver más detalles en las páginas finales del fichero 'Slides-Cours-3-Gadat.pdf'.
+
+Para buscar la mejor regla, tanto en regresión como en clasificación, debes probar los núcleos Gaussiano (el que emplean las funciones por defecto) y 'vanilla' (equivalente a no usar ninguna transformación).
+
+Para completar el trabajo debes evaluar el efecto de la mejor regla ajustada sobre el conjunto test (midiendo error cuadrático medio en el caso regresión y el error de clasificación en el otro caso).
+
+## Propuesta de solución
+Primero leo los datos y separo en grupos en función del valor de ozono  
+1 si O3 > 150  
+0 si O3 $\leq$ 150  
+Elimino la variable O3 para que no interfiera en la clasificación del SVM.  
+
+```{r,echo =TRUE}
+datos_ozono<-read.table(file = "ozone.dat",header=T)
+grupos_03obs<- factor(as.integer(datos_ozono$O3obs > 150)) #Si o3Obs > 150 grupos_O3obs =1
+
+datos_ozono<-cbind(datos_ozono,grupos_03obs)
+datos_ozono<-datos_ozono[,!(names(datos_ozono)) %in% "O3obs"] #Elimino la variable O3Obs (Para no tenerla en cuenta al hacer el svm)
+```
+
+Muestra aleatoria simple del 33.33% de los datos para Test y el 66.66% restante para train
+
+```{r}
+sample_aleatorio <- sample((1:length(datos_ozono[,1])),floor(length(datos_ozono[,1])*0.33),replace=F)
+ozono.train <- datos_ozono[-sample_aleatorio,]
+ozono.test <- datos_ozono[sample_aleatorio,]
+```
+Una vez tengo los grupos creados, y generada la muestra, voy a ver cómo se comportan los distintos kernels para este conjunto de datos.  
+  
+Primero hago tunneling de los parámetros para encontrar el óptimo  
+La función best.svm me modeliza el SVM con los parámetros que menor error den.
+
+### Kernel lineal o Vanilla
+$$K(u,v) = u'·v$$
+
+```{r,echo = TRUE}
+library(e1071)
+#KERNEL LINEAL o Vanilla
+
+svm_kernel_lineal_tunneling<-best.svm(grupos_03obs~.,cost=seq(0.5,5,0.5),data=ozono.train,kernel="linear")
+# Mejor coste
+mejor.cost_lineal=svm_kernel_lineal_tunneling$cost
+```
+
+El modelo de menor error tiene un coste de `r mejor.cost_lineal`  
+
+#### Predicciones del svm con kernel lineal:
+```{r,echo = TRUE}
+tabla_confusion<-table(ozono.test$grupos_03obs,predict(svm_kernel_lineal_tunneling,newdata = ozono.test))
+error_prediccion_lineal<-1-sum(diag(tabla_confusion))/sum(tabla_confusion)
+as.matrix(tabla_confusion)
+```
+Error de predicción con kernel lineal:  
+```{r,echo=FALSE}
+error_prediccion_lineal
+```
+
+### Kernel radial o Gaussiano  
+
+$$K(u,v) = exp(-gamma·|u-v|^2)$$
+
+Tunneling no solo del coste, tambien de gamma.
+```{r,echo = TRUE}
+svm_kernel_radial_tunneling<-best.svm(grupos_03obs~.,cost=seq(0.5,5,0.5),gamma = 10^(-4:2),data=ozono.train,kernel="radial")
+# Mejor coste
+mejor.cost_radial=svm_kernel_radial_tunneling$cost
+mejor.gamma_radial=svm_kernel_radial_tunneling$gamma
+```
+
+El modelo de menor error tiene un coste de `r mejor.cost_radial` y un gamma de `r mejor.gamma_radial`
+
+#### Predicciones del svm con kernel radial:
+```{r,echo = TRUE}
+tabla_confusion<-table(ozono.test$grupos_03obs,predict(svm_kernel_radial_tunneling,newdata = ozono.test))
+error_prediccion_radial<-1-sum(diag(tabla_confusion))/sum(tabla_confusion)
+as.matrix(tabla_confusion)
+```
+Error de predicción con el kernel radial:  
+```{r,echo=FALSE}
+error_prediccion_radial
+```
+
+### Kernel sigmoide  
+$$K(u,v) = tanh(gamma·u'·v + coef_0)$$
+
+Tunneling del coste, gamma y coef0.  
+Al incluir un parámetro más al tunneling tarda bastante más la ejecución.  
+```{r,echo = TRUE}
+svm_kernel_sigmoide_tunneling<-best.svm(grupos_03obs~.,cost=seq(0.5,5,0.5),gamma = 10^(-4:2),data=ozono.train,kernel="sigmoid")
+# Mejor coste
+mejor.cost_sigmoide=svm_kernel_sigmoide_tunneling$cost
+mejor.gamma_sigmoide=svm_kernel_sigmoide_tunneling$gamma
+mejor.coef0_sigmoide=svm_kernel_sigmoide_tunneling$coef0
+```
+
+El modelo de menor error tiene un coste de `r mejor.cost_sigmoide`, un gamma de `r mejor.gamma_sigmoide` y un coef0 de `r mejor.coef0_sigmoide`.  
+
+#### Predicciones del svm con kernel sigmoide:
+```{r,echo = TRUE}
+tabla_confusion<-table(ozono.test$grupos_03obs,predict(svm_kernel_sigmoide_tunneling,newdata = ozono.test))
+error_prediccion_sigmoide<-1-sum(diag(tabla_confusion))/sum(tabla_confusion)
+as.matrix(tabla_confusion)
+```
+Error de predicción con el kernel sigmoide:  
+```{r,echo=FALSE}
+error_prediccion_sigmoide
+```
+
+### Kernel polinómico  
+$$K(u,v) = (u'·v)^{degree}$$
+
+Tunneling de coste, gamma y grado del polinomio 
+Coef0 = 0
+```{r,echo = TRUE}
+svm_kernel_polinomico_tunneling<-best.svm(grupos_03obs~.,degree = 1:4,cost = 10^(seq(-2,2,by=0.5)),data=ozono.train,kernel="polynomial")
+# Mejor coste
+mejor.cost_polinomico=svm_kernel_polinomico_tunneling$cost
+mejor.gamma_polinomico=svm_kernel_polinomico_tunneling$gamma
+mejor.coef0_polinomico=svm_kernel_polinomico_tunneling$coef0
+mejor.grado_polinomico=svm_kernel_polinomico_tunneling$degree
+```
+
+El modelo de menor error tiene un coste de `r mejor.cost_polinomico`, un gamma de `r mejor.gamma_polinomico`, un coef(0) de `r mejor.coef0_polinomico` y un grado de `r mejor.grado_polinomico`.  
+
+#### Predicciones del svm con kernel polinomico:
+```{r,echo = TRUE}
+tabla_confusion<-table(ozono.test$grupos_03obs,predict(svm_kernel_polinomico_tunneling,newdata = ozono.test))
+error_prediccion_polinomico<-1-sum(diag(tabla_confusion))/sum(tabla_confusion)
+as.matrix(tabla_confusion)
+```
+Error de predicción con el kernel polinomico:  
+```{r,echo=FALSE}
+error_prediccion_polinomico
+```
+
+Al comparar errores:  
+Error lineal: `r error_prediccion_lineal`  
+Error polinómico: `r error_prediccion_polinomico`  
+Error radial: `r error_prediccion_radial`  
+Error sigmoide: `r error_prediccion_sigmoide`  
+
+Podemos ver cómo no hay prácticamente diferencias entre usar un kernel u otro.  Dado esto, yo elegiría el kernel lineal puesto que es el más sencillo y rápido (En cuanto a tiempo de ejecución) de todos.
