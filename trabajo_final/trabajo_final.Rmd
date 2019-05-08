@@ -1,0 +1,142 @@
+---
+title: "Defunciones de menores de una semana por causas - Calvo Magaz, Luis Miguel."
+author: "Luis Miguel Calvo Magaz"
+date: "24 de Abril de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(survival)
+library(KMsurv)
+library(survMisc)
+library(survminer)
+library(ggfortify)
+library(flexsurv)
+library(actuar)
+library(dplyr)
+```
+
+## Datos elegidos: Defunciones de menores de una semana por causas (lista perinatal),  sexo y edad.
+
+```{r, echo=FALSE,warning=FALSE}
+mortalidad <- read.csv2("todas_las_causas.csv",skip = 1,header=T)
+total<-as.numeric(as.character(mortalidad$Total[1]))
+rownames(mortalidad)<-mortalidad[,1] ; mortalidad<-mortalidad[,-1] ; 
+mortalidad<-mortalidad[,-1] ; mortalidad<-mortalidad[-1,]
+datos_mortalidad<-matrix(nrow = total, ncol=4); colnames(datos_mortalidad)<-c("Sexo","t_superv","muerte","causa")
+
+ficheros <- 4
+cont<-1
+for(fichero in 1:ficheros){
+  fichero_datos <- paste("fichero_datos_",as.character(fichero),".csv",sep = "")
+  datos <- read.csv2(fichero_datos,skip = 1,header=T)
+  rownames(datos)<-datos[,1] ; datos<-datos[,-1] ; datos<-datos[,-1] ; datos<-datos[-1,]
+  for(i in 1:length(datos$Menos.de.24.horas)){
+    for(j in 1:length(datos)){
+      if(as.numeric(as.character(datos[i,j]))!= 0){
+        for(k in 1:as.numeric(as.character(datos[i,j]))){
+          datos_mortalidad[cont,1]<-rownames(datos)[i]
+          datos_mortalidad[cont,2]<-j*24 # Discretizo el tiempo
+          datos_mortalidad[cont,3]<-1
+          datos_mortalidad[cont,4]<-fichero
+          cont<-cont+1
+        }
+      }
+    }
+  }
+}
+datos_mortalidad<-as.data.frame(datos_mortalidad,stringsAsFactors=F)
+datos_mortalidad$t_superv<-as.double(datos_mortalidad$t_superv)
+datos_mortalidad$muerte<-as.double(datos_mortalidad$muerte)
+datos_mortalidad$Sexo<-as.factor(datos_mortalidad$Sexo)
+datos_mortalidad$causa[datos_mortalidad$causa == 1] <- "Perinatal"
+datos_mortalidad$causa[datos_mortalidad$causa == 2] <- "Malformaciones"
+datos_mortalidad$causa[datos_mortalidad$causa == 3] <- "Enfermedades recién nacido"
+datos_mortalidad$causa[datos_mortalidad$causa == 4] <- "Causas externas"
+mortalidad.superv <- Surv(datos_mortalidad$t_superv,datos_mortalidad$muerte)
+```
+## Estimación Kaplan Meier para la función de supervivencia sin tener en cuenta el sexo
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.km <- survfit(mortalidad.superv ~ 1, data = datos_mortalidad, type = "kaplan-meier")
+
+summary(mortalidad.km)
+
+ggsurvplot(fit = mortalidad.km, data = datos_mortalidad, title = "Curva de Supervivencia", 
+    xlab = "Tiempo", ylab = "Probabilidad de supervivencia")
+
+ggsurvplot(mortalidad.km, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado")
+
+print(mortalidad.km,print.rmean=T)
+```
+## Estimación Kaplan Meier para la función de supervivencia según el sexo
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.km_sexo <- survfit(mortalidad.superv ~ Sexo, data = datos_mortalidad, type = "kaplan-meier")
+
+summary(mortalidad.km_sexo)
+
+ggsurvplot(fit = mortalidad.km_sexo, data = datos_mortalidad, title = "Curva de Supervivencia", 
+    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", 
+    legend.labs = c("Hombres", "Mujeres"))
+
+ggsurvplot(mortalidad.km_sexo, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
+    legend.labs = c("Hombres", "Mujeres"))
+
+print(mortalidad.km_sexo,print.rmean=T)
+```
+## Distribuyendo aleatoriamente los valores de tiempo uniformes (0,24), (24,48), ...
+```{r, echo=FALSE,warning=FALSE}
+datos_mortalidad_t_aleatorio <- datos_mortalidad
+for(i in 1:length(datos_mortalidad_t_aleatorio$t_superv)){
+  inferior = datos_mortalidad_t_aleatorio$t_superv[i]-24
+  superior = datos_mortalidad_t_aleatorio$t_superv[i]
+  datos_mortalidad_t_aleatorio$t_superv[i] <- round(runif(1,min=inferior,max=superior),digits = 1)
+}
+```
+##### Distribución uniforme de defunciones  
+```{r, echo=FALSE,warning=FALSE}
+plot(x=datos_mortalidad_t_aleatorio$t_superv,y=1:490,xlab = "Tiempo de supervivencia",ylab = "N observavción")
+```
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.superv_rdm <- Surv(datos_mortalidad_t_aleatorio$t_superv,datos_mortalidad_t_aleatorio$muerte)
+mortalidad.km_sexo_aleatorio <- survfit(mortalidad.superv_rdm ~ Sexo, data = datos_mortalidad_t_aleatorio, type = "kaplan-meier")
+
+ggsurvplot(fit = mortalidad.km_sexo_aleatorio, data = datos_mortalidad_t_aleatorio, title = "Curva de Supervivencia", 
+    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", 
+    legend.labs = c("Hombres", "Mujeres"))
+
+ggsurvplot(mortalidad.km_sexo_aleatorio, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
+    legend.labs = c("Hombres", "Mujeres"))
+
+print(mortalidad.km_sexo_aleatorio,print.rmean=T)
+```
+
+## Distribuyendo aleatoriamente los valores de tiempo normales de media la mitad del intervalo
+```{r, echo=FALSE,warning=FALSE}
+datos_mortalidad_t_aleatorio_normal <- datos_mortalidad
+for(i in 1:length(datos_mortalidad_t_aleatorio_normal$t_superv)){
+  mean = datos_mortalidad_t_aleatorio_normal$t_superv[i]-(24/2)
+  sd = (24-0)/sqrt(490/7)
+  datos_mortalidad_t_aleatorio_normal$t_superv[i] <- round(rnorm(1,mean=mean,sd = sd),digits = 1)
+}
+```
+##### Distribución normal de defunciones  
+```{r, echo=FALSE,warning=FALSE}
+plot(x=datos_mortalidad_t_aleatorio_normal$t_superv,y=1:490,xlab = "Tiempo de supervivencia",ylab = "N observavción")
+```
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.superv_rdm_norm <- Surv(datos_mortalidad_t_aleatorio_normal$t_superv,datos_mortalidad_t_aleatorio_normal$muerte)
+mortalidad.km_sexo_aleatorio_normal <- survfit(mortalidad.superv_rdm_norm ~ Sexo, data = datos_mortalidad_t_aleatorio_normal, type = "kaplan-meier")
+
+ggsurvplot(fit = mortalidad.km_sexo_aleatorio_normal, data = datos_mortalidad_t_aleatorio_normal, title = "Curva de Supervivencia", 
+    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", legend.labs = c("Hombres", "Mujeres"))
+
+ggsurvplot(mortalidad.km_sexo_aleatorio_normal, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
+    legend.labs = c("Hombres", "Mujeres"))
+
+print(mortalidad.km_sexo_aleatorio_normal,print.rmean=T)
+```
