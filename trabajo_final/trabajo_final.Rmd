@@ -1,8 +1,9 @@
 ---
-title: "Defunciones de menores de una semana por causas - Calvo Magaz, Luis Miguel."
-author: "Luis Miguel Calvo Magaz"
+title: "Defunciones de menores de una semana por causas"
+author: "Luis Miguel Calvo Magaz y Adrián Poncela Gómez"
 date: "24 de Abril de 2019"
-output: html_document
+output:
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -17,16 +18,55 @@ library(actuar)
 library(dplyr)
 ```
 
-## Datos elegidos: Defunciones de menores de una semana por causas (lista perinatal),  sexo y edad.
+## Datos elegidos: Defunciones de menores de una semana por causas (lista perinatal), sexo y edad.
+Los datos que hemos utilizado para la realización de este trabajo de Análisis de superviviencia,se trata de un conjunto de datos obtenidos del INE.
+Apartado: Sociedad-Salud-Defunciones según la Causa de Muerte 2017  
+Link: http://www.ine.es/jaxi/Tabla.htm?path=/t15/p417/a2017/l0/&file=01006.px&L=0  
+
+Esos datos muestran, el número de fallecidos por cada día, dentro de la primera semana de vida de los bebés. Hay que tener en cuenta, que todos los individuos que se estudian, fallecen en este estudio. No se estudia ningún individuo que viva más de una semana.  
+Los datos se muestran, divididos por sexo y edad de fallecimiento.  
+La edad de fallecimiento está calculada por diferencia entre la fecha de defunción y la de nacimiento, a excepción de los menores de 24 horas de vida. Por tanto, como fallecidos de un día figuran sólo aquellos que han vivido más de 24 horas y fallecido al día siguiente.  
+
+Variable objeto de estudio: Edad (días) de fallecimiento de los bebés que no vivieron más de una semana  
+Origen:1 de Enero de 2017  
+Suceso de interés:Fallecimiento del bebé.  
+Escala del tiempo: 1 de Enero de 2017 - 31 de Diciembre de 2017  
+Censuras y truncamientos: Para este conjunto de datos, no tenemos censuras ni truncamientos. Todos los indivuduos que son objeto de estudio, mueren, ninguno sobrevive, ya que todos los nacidos que viven más de una semana no son parte de este estudio.  
+
+Dentro de este conjunto de datos, además del sexo, se nos proporciona otra covariable, que es la causa de muerte.  
+Las causas de muerte aparecen dividas en apartados que son los que hemos utilizado, ya que considerar más de 90 casos de muerte para tan pocos datos (490 en un año), no sería relevante.  
+
+Los apartados de causas de muerte considerados, siguiendo la división que utiliza el INE, son los siguientes:  
+
+1) Perinatal (383 individuos)
+2) Malformaciones (86 individuos)
+3) Enfermedades recién nacido (20 individuos)
+4) Causas externas (1 individuo)
+
+Sin embargo, sólo un bebé se considera dentro del apartado de "Causas externas". Visto que no hay una similitud, de este individuo con las demás causas, y al ser sólo una observación, hemos decidido prescindir de él para la realización del estudio.  
+
+Respecto a los 3 tipos de causa que nos quedan, vemos como la distribución de los indivudios en cada una de las causas, es es igual, ya que una causas tiene más individuos que las demás. Se ve que hay una gran deiferencia entre ellas. Hay 4 veces más individuos muertos por malformaciones que por enfermedades de recien nacido. Además Hay casi 5 veces más muertos por perinatal que por malformaciones.  
+
+Para realizar el estudio,partiendo de los datos del INE, se han generado 4 ficheros de datos que  son los siguientes:  
+
+1) todas_las_causas.csv
+  Datos por sexo y edad con todas las causas de muerte.
+2) fichero_datos_1.csv
+  Datos por sexo y edad con causa de muerte: Perinatal
+3) fichero_datos_2.csv
+  Datos por sexo y edad con causa de muerte: Malformaciones
+4) fichero_datos_3.csv
+  Datos por sexo y edad con causa de muerte: Enfermedades recién nacido
+
 
 ```{r, echo=FALSE,warning=FALSE}
 mortalidad <- read.csv2("todas_las_causas.csv",skip = 1,header=T)
 total<-as.numeric(as.character(mortalidad$Total[1]))
 rownames(mortalidad)<-mortalidad[,1] ; mortalidad<-mortalidad[,-1] ; 
 mortalidad<-mortalidad[,-1] ; mortalidad<-mortalidad[-1,]
-datos_mortalidad<-matrix(nrow = total, ncol=4); colnames(datos_mortalidad)<-c("Sexo","t_superv","muerte","causa")
+datos_mortalidad<-matrix(nrow = total, ncol=5); colnames(datos_mortalidad)<-c("Sexo","t_superv","muerte","causa","pre72horas")
 
-ficheros <- 4
+ficheros <- 3
 cont<-1
 for(fichero in 1:ficheros){
   fichero_datos <- paste("fichero_datos_",as.character(fichero),".csv",sep = "")
@@ -38,6 +78,8 @@ for(fichero in 1:ficheros){
         for(k in 1:as.numeric(as.character(datos[i,j]))){
           datos_mortalidad[cont,1]<-rownames(datos)[i]
           datos_mortalidad[cont,2]<-j*24 # Discretizo el tiempo
+          if(j*24 <=72){datos_mortalidad[cont,5]<-1}
+          else{datos_mortalidad[cont,5]<-0}
           datos_mortalidad[cont,3]<-1
           datos_mortalidad[cont,4]<-fichero
           cont<-cont+1
@@ -53,28 +95,38 @@ datos_mortalidad$Sexo<-as.factor(datos_mortalidad$Sexo)
 datos_mortalidad$causa[datos_mortalidad$causa == 1] <- "Perinatal"
 datos_mortalidad$causa[datos_mortalidad$causa == 2] <- "Malformaciones"
 datos_mortalidad$causa[datos_mortalidad$causa == 3] <- "Enfermedades recién nacido"
-datos_mortalidad$causa[datos_mortalidad$causa == 4] <- "Causas externas"
+datos_mortalidad$pre72horas[datos_mortalidad$pre72horas == 1] <- "YES" 
+datos_mortalidad$pre72horas[datos_mortalidad$pre72horas == 0] <- "NO" 
 mortalidad.superv <- Surv(datos_mortalidad$t_superv,datos_mortalidad$muerte)
 ```
-## Estimación Kaplan Meier para la función de supervivencia sin tener en cuenta el sexo
+
+## Estimación Kaplan Meier sin covariables
+
 ```{r, echo=FALSE,warning=FALSE}
 mortalidad.km <- survfit(mortalidad.superv ~ 1, data = datos_mortalidad, type = "kaplan-meier")
 
-summary(mortalidad.km)
+print(mortalidad.km,print.rmean=T)
 
 ggsurvplot(fit = mortalidad.km, data = datos_mortalidad, title = "Curva de Supervivencia", 
     xlab = "Tiempo", ylab = "Probabilidad de supervivencia")
 
 ggsurvplot(mortalidad.km, fun = "cumhaz", xlab = "Tiempo", censor = T, 
     ylab = "Riesgo Acumulado", title = "Riesgo Acumulado")
-
-print(mortalidad.km,print.rmean=T)
 ```
-## Estimación Kaplan Meier para la función de supervivencia según el sexo
+
+Podemos ver cómo en las primeras 24 horas se alcanza el mayor número de defunciones de recién nacidos. A partir de ahí, el número de muertes disminuye, decreciendo linealmente.  
+Los intervalos de confianza se estrechan a medida que avanza el tiempo.  
+El número de muertes, por cada día, disminuye con el paso del tiempo. 
+La curva finaliza con valor cero, ya que todos los recién nacidos de este estudio, han fallecido.  
+En cuanto al grafico de la tasa de riesgo, se ve que los intervalos de confianza a medida que avanza el tiempo, aumentan su amplitud. Destacando, que en día 7 se muestra un Intervalo bastante amplio (Duda).  
+El primer incremento de riesgo es grande, luego baja considerablemente, y a partir de ahí sube hasta alcanzar el mayor incremento de riesgo al séptimo día.
+
+## Estimación Kaplan Meier según el sexo
+
 ```{r, echo=FALSE,warning=FALSE}
 mortalidad.km_sexo <- survfit(mortalidad.superv ~ Sexo, data = datos_mortalidad, type = "kaplan-meier")
 
-summary(mortalidad.km_sexo)
+print(mortalidad.km_sexo,print.rmean=T)
 
 ggsurvplot(fit = mortalidad.km_sexo, data = datos_mortalidad, title = "Curva de Supervivencia", 
     xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", 
@@ -83,10 +135,40 @@ ggsurvplot(fit = mortalidad.km_sexo, data = datos_mortalidad, title = "Curva de 
 ggsurvplot(mortalidad.km_sexo, fun = "cumhaz", xlab = "Tiempo", censor = T, 
     ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
     legend.labs = c("Hombres", "Mujeres"))
-
-print(mortalidad.km_sexo,print.rmean=T)
 ```
+
+Curva similar a la ya explicada, sin Covariables. Decrecimiento grande al principio, y a partir de ahí, disminuye linealmente.  
+La diferencia entre sexos, no es apreciable, ya que las dos gráficas son muy parecidas.  
+Destacar que en el segundo y tercer día la probabilidad de sobrevivir era mayor en los hombres que en las mujeres.  
+El cuarto día, la probabilidad es la misma, y los últimos 3 días se invierte; es decir la probabilidad de sobrevivir era mayor en las mujeres que en los hombres.
+Incremento lineal, muy similar entre ambos sexos.  
+Apenas hay diferencias gráficamente, quitando las del séptimo.
+
+## Estimación Kaplan Meier según la causa
+
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.km_causa <- survfit(mortalidad.superv ~ causa, data = datos_mortalidad, type = "kaplan-meier")
+
+print(mortalidad.km_causa,print.rmean=T)
+
+ggsurvplot(fit = mortalidad.km_causa, data = datos_mortalidad, title = "Curva de Supervivencia", 
+    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Causa:", 
+    legend.labs = c("Enfermedades recién nacido" ,"Malformaciones","Perinatal"))
+
+ggsurvplot(mortalidad.km_causa, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Causa:", 
+    legend.labs = c("Enfermedades recién nacido" ,"Malformaciones","Perinatal"))
+
+```
+
+El individuo que murió por causas externas es atípico, no tiene mucha relevancia en el estudio, lo suprimimos del estudio.
+En este gráfico, podemos ver dos partes. Una que es antes de las 72 horas, que serían los 3 primeros días. Y de los 3 días en adelante, es decir, más de 72 horas.
+En la priemera aprte del gráfico se ve como hay dos curvas muy similares, que son las de Malformaciones y Perinatal, que están muy juntas. Sin embargo , la tercera causa que se corresponde con als enfermedades del recien nacido, va por encima, más adelante veremos si es significativamente diferente o no.  
+En la segunda parte edl gráfico, se ve cómo la curva de enferemedades de recien nacido, ya no se separa de las otras dos, sino que las tres curvas, son bastante similares.
+
+
 ## Distribuyendo aleatoriamente los valores de tiempo uniformes (0,24), (24,48), ...
+
 ```{r, echo=FALSE,warning=FALSE}
 datos_mortalidad_t_aleatorio <- datos_mortalidad
 for(i in 1:length(datos_mortalidad_t_aleatorio$t_superv)){
@@ -95,48 +177,162 @@ for(i in 1:length(datos_mortalidad_t_aleatorio$t_superv)){
   datos_mortalidad_t_aleatorio$t_superv[i] <- round(runif(1,min=inferior,max=superior),digits = 1)
 }
 ```
-##### Distribución uniforme de defunciones  
+
+Decidimos aumentar la complejidad, del estudio.  
+Los datos les teníamos agrupados según la muerte por día. Hemos hecho una simulación, utilizado la distribución uniforme. La idea es distribuir las muertes, a lo largo del día, cómo si fuesen la edad de muerte, ya no sólo por el día de la muerte, sino por la hora de la muerte, distribuyendo el número de muertes por cada día, a lo largo de las 24 horas de ese día.  
+
+##### Distribución uniforme de defunciones
+
 ```{r, echo=FALSE,warning=FALSE}
 plot(x=datos_mortalidad_t_aleatorio$t_superv,y=1:490,xlab = "Tiempo de supervivencia",ylab = "N observavción")
 ```
+
+
+```{r, echo=FALSE,warning=FALSE}
+Dist <- c("weibull")
+data.Surv <- Surv(datos_mortalidad_t_aleatorio$t_superv,datos_mortalidad_t_aleatorio$muerte)
+# Inicia SCRIPT#
+
+model <- sapply(Dist, function(x) flexsurvreg(data.Surv ~ 1, dist = x), USE.NAMES = T, 
+    simplify = F)
+
+model$weibull
+plot(model[[1]], ci = F, conf.int = F, lty = 2, main = "Ajuste Paramétrico",  xlab = "Tiempo", ylab = "Probabilidad de Supervivencia")
+for (i in 1:length(Dist)) plot(model[[i]], ci = F, conf.int = F, add = T, col = i + 1, lty = i)
+
+legend("topright", c("KM", Dist), lty = 1, col = 1:(length(Dist) + 1))
+```
+
+Gráfico de la distribución de los datos, utilizando la uniforme.
+```{r, echo=FALSE,warning=FALSE}
+mortalidad.superv_rdm_sexo <- Surv(datos_mortalidad_t_aleatorio$t_superv,datos_mortalidad_t_aleatorio$muerte)
+mortalidad.km_causa_aleatorio_sexo <- survfit(mortalidad.superv_rdm_sexo ~ Sexo, data = datos_mortalidad_t_aleatorio, type = "kaplan-meier")
+
+print(mortalidad.km_causa_aleatorio_sexo,print.rmean=T)
+
+ggsurvplot(fit = mortalidad.km_causa_aleatorio_sexo, data = datos_mortalidad_t_aleatorio, title = "Curva de Supervivencia", xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo:", 
+    legend.labs = c("Hombre", "Mujer"))
+
+ggsurvplot(mortalidad.km_causa_aleatorio_sexo, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo:", 
+    legend.labs = c("Hombre", "Mujer"))
+
+```
+
+Los resultados, con la simulación de la uniforme, son diferentes en cuanto a las gráficas anteriores, a que ahora ya no son escalonadas, ya no muestran saltos, por cada día. Se muestra una función más lineal, sin saltos, aunque manteniendo las interpretaciones que concluimos anteriormente.
+
+Apenas hay diferencias, entre hombres y mujeres. Ésto es un dato que llama la atención. Ya que, podría existir una diferencia más considerable en cuanto al número de fallecidos en la priemra semana.  
+Vemos que no es así.
+
 ```{r, echo=FALSE,warning=FALSE}
 mortalidad.superv_rdm <- Surv(datos_mortalidad_t_aleatorio$t_superv,datos_mortalidad_t_aleatorio$muerte)
-mortalidad.km_sexo_aleatorio <- survfit(mortalidad.superv_rdm ~ Sexo, data = datos_mortalidad_t_aleatorio, type = "kaplan-meier")
+mortalidad.km_causa_aleatorio <- survfit(mortalidad.superv_rdm ~ causa, data = datos_mortalidad_t_aleatorio, type = "kaplan-meier")
 
-ggsurvplot(fit = mortalidad.km_sexo_aleatorio, data = datos_mortalidad_t_aleatorio, title = "Curva de Supervivencia", 
-    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", 
-    legend.labs = c("Hombres", "Mujeres"))
+print(mortalidad.km_causa_aleatorio,print.rmean=T)
 
-ggsurvplot(mortalidad.km_sexo_aleatorio, fun = "cumhaz", xlab = "Tiempo", censor = T, 
-    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
-    legend.labs = c("Hombres", "Mujeres"))
+ggsurvplot(fit = mortalidad.km_causa_aleatorio, data = datos_mortalidad_t_aleatorio, title = "Curva de Supervivencia", 
+   xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Causa:", 
+    legend.labs = c("Enfermedades recién nacido" ,"Malformaciones","Perinatal"))
 
-print(mortalidad.km_sexo_aleatorio,print.rmean=T)
+ggsurvplot(mortalidad.km_causa_aleatorio, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Causa:", 
+    legend.labs = c("Enfermedades recién nacido" ,"Malformaciones","Perinatal"))
+
 ```
 
-## Distribuyendo aleatoriamente los valores de tiempo normales de media la mitad del intervalo
+En este gráfico, vemos lo que ya coementamos anteriorimente. El gráfico se puede dividir en dos. Aproxiamdamente en antes y después de 72 horas. En la priemra parte, dos curvas muy similares que son las de perinatal y malformaciones; ambas diferentes de la de enefermedades del recien nacido. A partir de las 72 horas, las 3 curvas se asemejan más, no apreciando grandes diferencias visualmente.
+
+### Nos centramos en las muertes antes de las 72 horas
+
+Sexo
+
 ```{r, echo=FALSE,warning=FALSE}
-datos_mortalidad_t_aleatorio_normal <- datos_mortalidad
-for(i in 1:length(datos_mortalidad_t_aleatorio_normal$t_superv)){
-  mean = datos_mortalidad_t_aleatorio_normal$t_superv[i]-(24/2)
-  sd = (24-0)/sqrt(490/7)
-  datos_mortalidad_t_aleatorio_normal$t_superv[i] <- round(rnorm(1,mean=mean,sd = sd),digits = 1)
+datos_mortalidad_t_aleatorio_pre_72 = datos_mortalidad_t_aleatorio[datos_mortalidad_t_aleatorio$pre72horas=="YES",]
+mortalidad.superv_rdm_72 <- Surv(datos_mortalidad_t_aleatorio_pre_72$t_superv,datos_mortalidad_t_aleatorio_pre_72$muerte)
+mortalidad.km_sexo_pre72 <- survfit(mortalidad.superv_rdm_72 ~ Sexo, data = datos_mortalidad_t_aleatorio_pre_72, type = "kaplan-meier")
+
+print(mortalidad.km_sexo_pre72,print.rmean=T)
+
+ggsurvplot(fit = mortalidad.km_sexo_pre72, data = datos_mortalidad_t_aleatorio_pre_72, title = "Curva de Supervivencia",xlab = "Tiempo", ylab = "Probabilidad de supervivencia")
+
+ggsurvplot(mortalidad.km_sexo_pre72, fun = "cumhaz", xlab = "Tiempo", censor = T, ylab = "Riesgo Acumulado", title = "Riesgo Acumulado")
+```
+
+Contraste log rank para los grupos de Sexo(Hombres y mujeres)
+
+```{r, echo = FALSE}
+survdiff(mortalidad.superv_rdm~Sexo,data = datos_mortalidad_t_aleatorio)
+```
+Contraste log rank para los grupos de Sexo antes de las 72 horas(Hombres y mujeres)
+
+```{r, echo = FALSE}
+survdiff(mortalidad.superv_rdm_72~Sexo,data = datos_mortalidad_t_aleatorio_pre_72)
+```
+
+Causa
+
+```{r, echo=FALSE,warning=FALSE}
+datos_mortalidad_t_aleatorio_pre_72 = datos_mortalidad_t_aleatorio[datos_mortalidad_t_aleatorio$pre72horas=="YES",]
+mortalidad.superv_rdm_72 <- Surv(datos_mortalidad_t_aleatorio_pre_72$t_superv,datos_mortalidad_t_aleatorio_pre_72$muerte)
+mortalidad.km_causa_pre72 <- survfit(mortalidad.superv_rdm_72 ~ causa, data = datos_mortalidad_t_aleatorio_pre_72, type = "kaplan-meier")
+
+print(mortalidad.km_causa_pre72,print.rmean=T)
+
+ggsurvplot(fit = mortalidad.km_causa_pre72, data = datos_mortalidad_t_aleatorio_pre_72, title = "Curva de Supervivencia",xlab = "Tiempo", ylab = "Probabilidad de supervivencia",font.legend=c(5))
+
+ggsurvplot(mortalidad.km_causa_pre72, fun = "cumhaz", xlab = "Tiempo", censor = T, 
+    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado")
+```
+
+Contraste log rank para las covariables de causa indiferentemente del tiempo.
+```{r, echo = FALSE}
+survdiff(mortalidad.superv_rdm~causa,data = datos_mortalidad_t_aleatorio)
+```
+
+Contraste log rank para las covariables de causa para los individuos que fallecen antes de 72 horas.
+```{r, echo = FALSE}
+survdiff(mortalidad.superv_rdm_72~causa,data = datos_mortalidad_t_aleatorio_pre_72)
+```
+
+Contraste log rank para las covariables de causa eliminando a los recién nacidos
+```{r, echo = FALSE}
+datos_mortalidad_t_aleatorio_sin_recien <- datos_mortalidad_t_aleatorio[datos_mortalidad_t_aleatorio$causa != "Enfermedades recién nacido",]
+
+mortalidad.superv_sin_recien <- Surv(datos_mortalidad_t_aleatorio_sin_recien$t_superv,datos_mortalidad_t_aleatorio_sin_recien$muerte)
+
+survdiff(mortalidad.superv_sin_recien ~ causa , data = datos_mortalidad_t_aleatorio_sin_recien)
+```
+
+Contraste log rank para las covariables de causa eliminando a los recién nacidos que fallecen antes de 72 horas.
+```{r, echo = FALSE}
+datos_mortalidad_t_aleatorio_sin_recien_pre_72 <- datos_mortalidad_t_aleatorio_pre_72[datos_mortalidad_t_aleatorio_pre_72$causa != "Enfermedades recién nacido",]
+
+mortalidad.superv_sin_recien_pre_72 <- Surv(datos_mortalidad_t_aleatorio_sin_recien_pre_72$t_superv,datos_mortalidad_t_aleatorio_sin_recien_pre_72$muerte)
+
+survdiff(mortalidad.superv_sin_recien_pre_72 ~ causa , data = datos_mortalidad_t_aleatorio_sin_recien_pre_72)
+```
+
+Contraste log rank para las covariables de causa juntando Malformaciones y perinatal
+```{r, echo = FALSE}
+datos_mortalidad_t_aleatorio_n =  datos_mortalidad_t_aleatorio[-490,]
+for(i in 1:length(datos_mortalidad_t_aleatorio_n[,1])){
+  if(datos_mortalidad_t_aleatorio_n[i,]$causa=="Perinatal"||datos_mortalidad_t_aleatorio_n[i,]$causa=="Malformaciones"){
+    datos_mortalidad_t_aleatorio_n[i,]$causa="Perinatal-Malformaciones"
+  }
 }
+mortalidad.superv_n<- Surv(datos_mortalidad_t_aleatorio_n$t_superv,datos_mortalidad_t_aleatorio_n$muerte)
+
+survdiff(mortalidad.superv_n ~ causa , data = datos_mortalidad_t_aleatorio_n)
+
 ```
-##### Distribución normal de defunciones  
+
+### Estimador de COX
+
 ```{r, echo=FALSE,warning=FALSE}
-plot(x=datos_mortalidad_t_aleatorio_normal$t_superv,y=1:490,xlab = "Tiempo de supervivencia",ylab = "N observavción")
+mortalidad.km_COX_completo <- coxph(mortalidad.superv ~ causa + Sexo, data = datos_mortalidad)
+riesgos_proporcionales <- cox.zph(mortalidad.km_COX_completo)
+riesgos_proporcionales
 ```
-```{r, echo=FALSE,warning=FALSE}
-mortalidad.superv_rdm_norm <- Surv(datos_mortalidad_t_aleatorio_normal$t_superv,datos_mortalidad_t_aleatorio_normal$muerte)
-mortalidad.km_sexo_aleatorio_normal <- survfit(mortalidad.superv_rdm_norm ~ Sexo, data = datos_mortalidad_t_aleatorio_normal, type = "kaplan-meier")
 
-ggsurvplot(fit = mortalidad.km_sexo_aleatorio_normal, data = datos_mortalidad_t_aleatorio_normal, title = "Curva de Supervivencia", 
-    xlab = "Tiempo", ylab = "Probabilidad de supervivencia", legend.title = "Sexo", legend.labs = c("Hombres", "Mujeres"))
-
-ggsurvplot(mortalidad.km_sexo_aleatorio_normal, fun = "cumhaz", xlab = "Tiempo", censor = T, 
-    ylab = "Riesgo Acumulado", title = "Riesgo Acumulado", legend.title = "Sexo", 
-    legend.labs = c("Hombres", "Mujeres"))
-
-print(mortalidad.km_sexo_aleatorio_normal,print.rmean=T)
-```
+El modelo de COX plantea el logaritmo del riesgo relativo como una función lineal de las variables independientes. Se supone, por lo tanto, que el riesgo relativo, a diferencia del riesgo propiamente dicho, no depende del tiempo o, dicho de otra manera, que es constante a lo largo del tiempo (de ahí el nombre de modelo de riesgo proporcional).  
+Esto no se cumple en nuestro conjunto de datos ya que, como podemos ver, el riesgo aumenta exponencialmente, por lo tanto, el modelo de COX no es el modelo adecuado para nuestro conjunto.
