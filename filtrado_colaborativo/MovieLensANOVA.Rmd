@@ -1,0 +1,29 @@
+---
+title: "MovieLens: ANOVA"
+author: "Luis Miguel Calvo Magaz"
+date: "16 de Mayo de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Estudio de la matriz 100k
+No he elegido el conjutno de datos más grade porque el tiempo de computo excedía las 2 horas.
+```{r}
+# lectura
+dBrut=read.csv("ml-ratings100k.csv")
+library(softImpute)
+
+# extracción de conjunto test y conjunto train
+dTestInd=sample(nrow(dBrut),nrow(dBrut)/10,replace=FALSE)
+dTest=dBrut[dTestInd,1:3]
+dTrain=dBrut[-dTestInd,1:3]
+```
+
+```{r}
+modelo_aov<- aov(formula=rating~userId+movieId ,data=dTrain)
+predicciones_aov <- predict(modelo_aov,dTest)
+sqrt(mean((dTest$rating-predicciones_aov)**2))
+```

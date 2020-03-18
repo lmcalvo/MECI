@@ -1,0 +1,118 @@
+---
+title: "MovieLens: ejemplo de filtrado colaborativo"
+author: "Luis Miguel Calvo Magaz"
+date: "24 de Abril de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sistemas de recomendación: regularización espectral
+
+```{r, message =FALSE}
+library(softImpute)
+```
+
+## Estudio de la matriz 100k
+No he elegido el conjutno de datos más grade porque el tiempo de computo excedía las 2 horas.
+```{r}
+# lectura
+dBrut=read.csv("ml-ratings100k.csv")
+```
+
+### Validación cruzada para softImpute dado un nuevo lambda
+```{r, echo = TRUE}
+cvSoftImpute <- function(datos, lambda_nueva){
+  cat("  Comienzo validación cruzada\n")
+  Folds <- 5            
+  datos$kfold <- sample(1:Folds, nrow(datos), replace = T)
+  error <- rep(99999.99,Folds)
+  cat("  Fold: ")
+  for (i in 1:Folds) {
+    cat(i," ")
+    dTest <- subset(datos, kfold  == i)
+    dTrain <- subset(datos, !kfold == i)
+    dTrainSparse=Incomplete(dTrain$userId,dTrain$movieId,dTrain$rating)
+    res=softImpute(dTrainSparse,rank.max=4,type="als",lambda=lambda_nueva,maxit=200)
+    recom=impute(res,dTest$userId,dTest$movieId);recom[recom>5]=5;recom[recom<0]=0
+    error[i] = sqrt(mean((dTest$rating-recom)**2))
+  }
+  cat("\n")
+  return(mean(error))
+}
+```
+### Elección del lambda
+He elegido un método de selección de lambda basado en intervalos, esta función recibe por parámetros:  
+  1. datos = El conjunto de datos.  
+  2. lambda_inicial = Primer lambda con el que se va a calcular el error.  
+  3. extremo_inferior y extremo_superior = Valor mínimo y máximo que puede tomar el lambda que queremos calcular.  
+  4. max_iteraciones = Número máximo de iteraciones.  
+```{r, echo = TRUE}
+lambda_softImpute <- function(datos, lambda_inicial, extremo_inferior, extremo_superior, max_iteraciones){
+  error = cvSoftImpute(datos = dBrut, lambda_nueva = lambda_inicial)
+  cat("--------------------\n");cat("Error inicial con lambda = ",lambda_inicial,": ",error,"\n");cat("--------------------\n")
+  lambda = lambda_inicial
+  for (i in 1:max_iteraciones){
+    cat("[ ",extremo_inferior," , ",extremo_superior," ]\n")
+    cat("lambda ",lambda,"\n")
+    lambda_nueva = round(runif(1,extremo_inferior,extremo_superior),digits = 3)
+    cat("Nuevo lambda ",lambda_nueva,"\n")
+    error_nuevo = cvSoftImpute(datos = dBrut, lambda = lambda_nueva)
+    if((abs(error_nuevo-error)<=0.001) | (abs(lambda_nueva-lambda)<=0.01)){
+      break;cat(i," iteraciones\n")
+    }
+    cat("Error ",error,"\n")
+    cat("Error nuevo ",error_nuevo,"\n")
+    if(error_nuevo<error){
+      cat("MEJOOORA\n")
+      lambda = lambda_nueva
+      error = error_nuevo
+      if(lambda_nueva >= lambda){
+        extremo_inferior = lambda
+        extremo_superior = extremo_superior
+      }else{
+        extremo_inferior = extremo_inferior
+        extremo_superior = lambda
+      }
+    }else{
+      cat("NOOO MEJOOORA\n")
+      if(lambda_nueva >= lambda){
+        extremo_inferior = extremo_inferior
+        extremo_superior = lambda_nueva
+      }else{
+        extremo_inferior = lambda_nueva
+        extremo_superior = extremo_superior
+      }
+    }
+    cat("--------------------\n")
+  }
+  cat("Lambda bueno: ", lambda,"\n")
+  cat("Error: ", error,"\n")
+  salida <- as.data.frame(matrix(c(lambda, error),ncol = 2)); colnames(salida)<-c("lambda","error")
+  return(salida)
+}
+```
+
+```{r}
+salida <- lambda_softImpute(datos = dBrut, lambda_inicial = 1, extremo_inferior = 0, extremo_superior = 2, max_iteraciones = 5)
+lambda_elegida = salida$lambda
+error_final <- salida$error
+lambda_elegida
+error_final
+```
+
+### Modelo ANOVA
+```{r, echo = TRUE}
+dTestInd=sample(nrow(dBrut),nrow(dBrut)/10,replace=FALSE)
+dTest=dBrut[dTestInd,1:3]
+dTrain=dBrut[-dTestInd,1:3]
+modelo_aov<- aov(formula=rating~userId+movieId ,data=dTrain)
+predicciones_aov <- predict(modelo_aov,dTest)
+error_ANOVA = sqrt(mean((dTest$rating-predicciones_aov)**2))
+```
+
+Llego a la conclusión por lo tanto que el error es muy similar en ambos modelos teniendo errores de :  
+`r error_final ` para el mejor lambda encontrado(`r lambda_elegida`) con el modelo de SoftImpute.  
+`r error_ANOVA ` con el modelo de SoftImpute.  

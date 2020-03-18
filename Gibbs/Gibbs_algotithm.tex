@@ -1,0 +1,555 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Algoritmo de Gibbs},
+            pdfauthor={Luis Miguel Calvo Magaz and Adrián Poncela Gómez},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Algoritmo de Gibbs}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Luis Miguel Calvo Magaz and Adrián Poncela Gómez}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{7 de marzo de 2019}
+
+
+\begin{document}
+\maketitle
+
+\subsection{Introducción}\label{introduccion}
+
+Considera un modelo de regresión con efectos aleatorios para analizar
+los datos del ejemplo D (ratas.xls: contiene las observaciones del peso
+en 5 momentos del tiempo : 8,15,22,29 y 36 días). Considera que tanto el
+término independiente como el coeficiente de la variable explicativa
+(tiempo centrado \((x-\bar x)\)) son a su vez variables aleatorias
+normales que dependen de hiperparámetros.
+
+\subsection{Modelo en términos de los parámetros e
+hiperparámetros.}\label{modelo-en-terminos-de-los-parametros-e-hiperparametros.}
+
+Modelo jerárquico normal:
+\[y_{ij}\;=\; Peso\;de\;la\;rata\;i\;en\;el\;día\;x_j\;,\;i\in\{1,2,...,30\}\;,\;x_j\in\{8,15,22,29,36\}\]
+\[x_j\;=\;Momento\;de\;tiempo\;j\;,\;j\in\{1,2,3,4,5\}\;,\;x_j\in\{8,15,22,29,36\}\]
+\[y_{ij} \sim Normal(\alpha_i + \beta_i·(x_j-\bar{x}) ,\;\sigma_y^2)\]\\
+donde:
+
+\[\alpha_i \sim Normal(\mu_\alpha,\sigma_\alpha^2)\]
+\[\beta_i \sim Normal(\mu_\beta,\sigma_\beta^2)\]
+
+\subsection{Resumen de los datos}\label{resumen-de-los-datos}
+
+\begin{verbatim}
+##        tiempo1 tiempo2 tiempo3 tiempo4 tiempo5
+## rata1      151     199     246     283     320
+## rata2      145     199     249     293     354
+## rata3      147     214     263     312     328
+## rata4      155     200     237     272     297
+## rata5      135     188     230     280     323
+## rata6      159     210     252     298     331
+## rata7      141     189     231     275     305
+## rata8      159     201     248     297     338
+## rata9      177     236     285     350     376
+## rata10     134     182     220     260     296
+## rata11     160     208     261     313     352
+## rata12     143     188     220     273     314
+## rata13     154     200     244     289     325
+## rata14     171     221     270     326     358
+## rata15     163     216     242     281     312
+## rata16     160     207     248     288     324
+## rata17     142     187     234     280     316
+## rata18     156     203     243     283     317
+## rata19     157     212     259     307     336
+## rata20     152     203     246     286     321
+## rata21     154     205     253     298     334
+## rata22     139     190     225     267     302
+## rata23     146     191     229     272     302
+## rata24     157     211     250     285     323
+## rata25     132     185     237     286     331
+## rata26     160     207     257     303     345
+## rata27     169     216     261     295     333
+## rata28     157     205     248     289     316
+## rata29     137     180     219     258     291
+## rata30     153     200     244     286     324
+\end{verbatim}
+
+Medias:
+
+\begin{verbatim}
+##  tiempo1  tiempo2  tiempo3  tiempo4  tiempo5 
+## 152.1667 201.7667 245.0333 289.5000 324.8000
+\end{verbatim}
+
+Varianzas:
+
+\begin{verbatim}
+##  tiempo1  tiempo2  tiempo3  tiempo4  tiempo5 
+## 124.6264 160.5989 236.2402 367.0172 378.6483
+\end{verbatim}
+
+\subsection{Implementación del Modelo jerárquico en
+R:}\label{implementacion-del-modelo-jerarquico-en-r}
+
+\subsubsection{Funciones de las Distribuciones condicionadas de los
+parámetros}\label{funciones-de-las-distribuciones-condicionadas-de-los-parametros}
+
+\begin{figure}
+\centering
+\includegraphics{./alpha_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alpha_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(mu_alpha,sigma2_alpha,peso,beta,tiempos)\{}
+\NormalTok{  J <-}\StringTok{ }\KeywordTok{length}\NormalTok{(peso)}
+\NormalTok{  media <-}\StringTok{ }\DecValTok{0}
+\NormalTok{  varianza <-}\StringTok{ }\DecValTok{0}
+\NormalTok{  sumatorio <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{J)\{}
+\NormalTok{      sumatorio <-}\StringTok{ }\NormalTok{sumatorio }\OperatorTok{+}\StringTok{ }\NormalTok{(peso[j]}\OperatorTok{-}\NormalTok{beta}\OperatorTok{*}\NormalTok{tiempos[j])}
+\NormalTok{  \}}
+\NormalTok{  media <-}\StringTok{ }\NormalTok{(mu_alpha}\OperatorTok{/}\NormalTok{sigma2_alpha) }\OperatorTok{+}\StringTok{ }\NormalTok{(sumatorio}\OperatorTok{/}\NormalTok{((}\DecValTok{1}\OperatorTok{/}\NormalTok{sigma2_alpha)}\OperatorTok{+}\NormalTok{(J}\OperatorTok{/}\NormalTok{sigma2_y)))}
+\NormalTok{  varianza <-}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{((}\DecValTok{1}\OperatorTok{/}\NormalTok{sigma2_alpha)}\OperatorTok{+}\NormalTok{(J}\OperatorTok{/}\NormalTok{sigma2_y))}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,media,}\KeywordTok{sqrt}\NormalTok{(varianza)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./beta_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{beta_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(mu_beta,sigma2_beta,peso,alpha,tiempos)\{}
+\NormalTok{  J <-}\StringTok{ }\KeywordTok{length}\NormalTok{(peso)}
+\NormalTok{  media <-}\StringTok{ }\DecValTok{0}
+\NormalTok{  varianza <-}\StringTok{ }\DecValTok{0}
+\NormalTok{  sumatorio <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{J)\{}
+\NormalTok{    sumatorio <-}\StringTok{ }\NormalTok{sumatorio}\OperatorTok{+}\NormalTok{(peso[j]}\OperatorTok{*}\NormalTok{tiempos[j]}\OperatorTok{-}\NormalTok{alpha}\OperatorTok{*}\NormalTok{tiempos[j])}
+\NormalTok{  \}}
+\NormalTok{  media <-}\StringTok{ }\NormalTok{((mu_beta}\OperatorTok{/}\NormalTok{sigma2_beta) }\OperatorTok{+}\StringTok{ }\NormalTok{(sumatorio}\OperatorTok{/}\NormalTok{sigma2_y))}\OperatorTok{/}\NormalTok{((}\DecValTok{1}\OperatorTok{/}\NormalTok{sigma2_beta)}\OperatorTok{+}\NormalTok{(}\KeywordTok{sum}\NormalTok{(tiempos}\OperatorTok{^}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{sigma2_y))}
+\NormalTok{  varianza <-}\StringTok{ }\DecValTok{1}\OperatorTok{/}\NormalTok{((}\DecValTok{1}\OperatorTok{/}\NormalTok{sigma2_beta)}\OperatorTok{+}\NormalTok{(}\KeywordTok{sum}\NormalTok{(tiempos}\OperatorTok{^}\DecValTok{2}\NormalTok{)}\OperatorTok{/}\NormalTok{sigma2_y))}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,media,}\KeywordTok{sqrt}\NormalTok{(varianza)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./sigma_y_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sigma2_y_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Y,alpha,beta,X)\{}
+\NormalTok{  n <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  J <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{2}\NormalTok{]}
+\NormalTok{  media <-}\StringTok{ }\NormalTok{n}\OperatorTok{*}\NormalTok{J}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  sumatorio <-}\StringTok{ }\FloatTok{0.0}
+  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{J)\{}
+    \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{      sumatorio <-}\StringTok{ }\NormalTok{sumatorio }\OperatorTok{+}\StringTok{ }\NormalTok{(Y[i,j] }\OperatorTok{-}\StringTok{ }\NormalTok{(alpha[i] }\OperatorTok{+}\StringTok{ }\NormalTok{beta[i]}\OperatorTok{*}\NormalTok{X[j]))}\OperatorTok{^}\DecValTok{2}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{  dispersion <-}\StringTok{ }\NormalTok{sumatorio}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  gamma_inversa <-}\StringTok{ }\KeywordTok{rigamma}\NormalTok{(}\DataTypeTok{n=}\DecValTok{1}\NormalTok{,}\DataTypeTok{alpha =}\NormalTok{ media,}\DataTypeTok{beta =}\NormalTok{ dispersion)}
+  \KeywordTok{return}\NormalTok{(gamma_inversa)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./sigma_a_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sigma2_alpha_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Y,alpha,mu_alpha)\{}
+\NormalTok{  n <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  media <-}\StringTok{ }\NormalTok{n}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  sumatorio <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    sumatorio <-}\StringTok{ }\NormalTok{sumatorio }\OperatorTok{+}\StringTok{ }\NormalTok{(alpha[i] }\OperatorTok{-}\StringTok{ }\NormalTok{mu_alpha)}\OperatorTok{^}\DecValTok{2}
+\NormalTok{  \}}
+\NormalTok{  dispersion <-}\StringTok{ }\NormalTok{sumatorio}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  gamma_inversa <-}\StringTok{ }\KeywordTok{rigamma}\NormalTok{(}\DataTypeTok{n=}\DecValTok{1}\NormalTok{,}\DataTypeTok{alpha=}\NormalTok{media,}\DataTypeTok{beta =}\NormalTok{dispersion)}
+  \KeywordTok{return}\NormalTok{(gamma_inversa)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./sigma_b_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sigma2_beta_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Y,beta,mu_beta)\{}
+\NormalTok{  n <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  media <-}\StringTok{ }\NormalTok{n}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  sumatorio <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    sumatorio <-}\StringTok{ }\NormalTok{sumatorio }\OperatorTok{+}\StringTok{ }\NormalTok{(beta[i] }\OperatorTok{-}\StringTok{ }\NormalTok{mu_beta)}\OperatorTok{^}\DecValTok{2}
+\NormalTok{  \}}
+\NormalTok{  dispersion <-}\StringTok{ }\NormalTok{sumatorio}\OperatorTok{/}\DecValTok{2}
+\NormalTok{  gamma_inversa <-}\StringTok{ }\KeywordTok{rigamma}\NormalTok{(}\DataTypeTok{n=}\DecValTok{1}\NormalTok{,}\DataTypeTok{alpha=}\NormalTok{media,}\DataTypeTok{beta =}\NormalTok{dispersion)}
+  \KeywordTok{return}\NormalTok{(gamma_inversa)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./mu_a_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mu_alpha_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Y,alpha,sigma2_alpha)\{}
+\NormalTok{  n <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  media <-}\StringTok{ }\KeywordTok{sum}\NormalTok{(alpha)}\OperatorTok{/}\NormalTok{n}
+\NormalTok{  varianza <-}\StringTok{ }\NormalTok{sigma2_alpha}\OperatorTok{/}\NormalTok{n}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,media,}\KeywordTok{sqrt}\NormalTok{(varianza)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{./mu_a_condicionada.png}
+\caption{}
+\end{figure}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mu_beta_condicionada <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Y,beta,sigma2_beta)\{}
+\NormalTok{  n <-}\StringTok{ }\KeywordTok{dim}\NormalTok{(Y)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{  media <-}\StringTok{ }\KeywordTok{sum}\NormalTok{(beta)}\OperatorTok{/}\NormalTok{n}
+\NormalTok{  varianza <-}\StringTok{ }\NormalTok{sigma2_beta}\OperatorTok{/}\NormalTok{n}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{rnorm}\NormalTok{(}\DecValTok{1}\NormalTok{,media,}\KeywordTok{sqrt}\NormalTok{(varianza)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Implementación del algoritmo de Gibbs en
+R:}\label{implementacion-del-algoritmo-de-gibbs-en-r}
+
+Buscamos el mayor nivel de actualización, por lo que actualizamos todos
+los parámetros en cada iteracción para cada una de las ratas.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gibbs <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(datos,tiempos,numero_iteraciones,alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)\{}
+\NormalTok{  numero_parametros<-}\KeywordTok{length}\NormalTok{(alpha)}\OperatorTok{+}\KeywordTok{length}\NormalTok{(beta)}\OperatorTok{+}\DecValTok{5}
+\NormalTok{  parametros<-}\KeywordTok{matrix}\NormalTok{(}\KeywordTok{rep}\NormalTok{(}\FloatTok{0.00}\NormalTok{,numero_parametros}\OperatorTok{*}\NormalTok{numero_iteraciones),}\KeywordTok{c}\NormalTok{(numero_iteraciones,numero_parametros))}
+  \KeywordTok{colnames}\NormalTok{(parametros)<-}\KeywordTok{c}\NormalTok{(}\KeywordTok{paste0}\NormalTok{(}\StringTok{"alpha"}\NormalTok{,}\DecValTok{1}\OperatorTok{:}\DecValTok{30}\NormalTok{),}\KeywordTok{paste0}\NormalTok{(}\StringTok{"beta"}\NormalTok{,}\DecValTok{1}\OperatorTok{:}\DecValTok{30}\NormalTok{),}\StringTok{"sigma_2_y"}\NormalTok{,}\StringTok{"sigma2_alpha"}\NormalTok{,}\StringTok{"sigma2_betas"}\NormalTok{,}\StringTok{"mu_alpha"}\NormalTok{,}\StringTok{"mu_beta"}\NormalTok{)}
+\NormalTok{  parametros[}\DecValTok{1}\NormalTok{,] <-}\StringTok{ }\KeywordTok{c}\NormalTok{(alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)}
+  \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{numero_iteraciones)\{}
+    \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(alpha))\{}
+\NormalTok{      mu_alpha <-}\StringTok{ }\KeywordTok{mu_alpha_condicionada}\NormalTok{(datos,alpha,sigma2_alpha)}
+\NormalTok{      mu_beta <-}\StringTok{ }\KeywordTok{mu_beta_condicionada}\NormalTok{(datos,beta,sigma2_beta)}
+\NormalTok{      sigma2_y <-}\StringTok{ }\KeywordTok{sigma2_y_condicionada}\NormalTok{(datos,alpha,beta,tiempos)}
+\NormalTok{      sigma2_alpha <-}\StringTok{ }\KeywordTok{sigma2_alpha_condicionada}\NormalTok{(datos,alpha,mu_alpha)}
+\NormalTok{      sigma2_beta <-}\StringTok{ }\KeywordTok{sigma2_beta_condicionada}\NormalTok{(datos,beta,mu_beta)}
+\NormalTok{      alpha[j] <-}\StringTok{ }\KeywordTok{alpha_condicionada}\NormalTok{(mu_alpha,sigma2_alpha,datos[j,],beta[j],tiempos)}
+\NormalTok{      beta[j] <-}\StringTok{ }\KeywordTok{beta_condicionada}\NormalTok{(mu_beta,sigma2_beta,datos[j,],alpha[j],tiempos)}
+\NormalTok{    \}}
+\NormalTok{    parametros_nuevos <-}\StringTok{ }\KeywordTok{c}\NormalTok{(alpha,beta,sigma2_y,sigma2_alpha,sigma2_beta,mu_alpha,mu_beta)}
+\NormalTok{    parametros[i,] <-}\StringTok{ }\NormalTok{parametros_nuevos}
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{(parametros)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Resultados:}\label{resultados}
+
+Obtenemos los siguientes resultados para 500 iteraciones y quemando el
+\(10\%\) de las primeras iteraciones, en un tiempo de ejecución de
+\textbf{5.2303181} segundos.
+
+\begin{itemize}
+\tightlist
+\item
+  El vector medio de \(\alpha\) (El intercept) sería:
+\end{itemize}
+
+\begin{verbatim}
+##   alpha1   alpha2   alpha3   alpha4   alpha5   alpha6   alpha7   alpha8 
+## 240.7105 248.9210 253.7090 233.1136 232.1195 250.9230 229.1376 249.5704 
+##   alpha9  alpha10  alpha11  alpha12  alpha13  alpha14  alpha15  alpha16 
+## 285.6516 219.3130 259.7480 228.5511 243.2812 270.0692 243.7078 246.3105 
+##  alpha17  alpha18  alpha19  alpha20  alpha21  alpha22  alpha23  alpha24 
+## 232.7511 241.2911 255.1427 242.5223 249.6881 225.4852 228.9416 246.1091 
+##  alpha25  alpha26  alpha27  alpha28  alpha29  alpha30 
+## 235.1137 255.3123 255.7055 243.9022 217.9804 242.3201
+\end{verbatim}
+
+\begin{itemize}
+\tightlist
+\item
+  El vector medio de \(\beta\) , (La pendiente) sería:
+\end{itemize}
+
+\begin{verbatim}
+##    beta1    beta2    beta3    beta4    beta5    beta6    beta7    beta8 
+## 6.026748 7.307014 6.568257 5.092684 6.681338 6.171804 5.920192 6.482920 
+##    beta9   beta10   beta11   beta12   beta13   beta14   beta15   beta16 
+## 7.310165 5.746587 6.979658 6.105322 6.158245 6.841061 5.190020 5.842940 
+##   beta17   beta18   beta19   beta20   beta21   beta22   beta23   beta24 
+## 6.298896 5.746226 6.470086 6.014586 6.468520 5.764092 5.619896 5.803626 
+##   beta25   beta26   beta27   beta28   beta29   beta30 
+## 7.119033 6.653266 5.817402 5.742914 5.517246 6.112961
+\end{verbatim}
+
+\begin{itemize}
+\tightlist
+\item
+  La desviación \(\sigma_y^2\) sería:
+\end{itemize}
+
+\begin{verbatim}
+## [1] 23.24535
+\end{verbatim}
+
+\paragraph{Gráficas de convergencia de los parámetros en las
+iteraciones:}\label{graficas-de-convergencia-de-los-parametros-en-las-iteraciones}
+
+\begin{itemize}
+\item
+  \textbf{\(\mu_\alpha\)}:\\
+  \includegraphics{Gibbs_algotithm_files/figure-latex/unnamed-chunk-16-1.pdf}
+\item
+  \textbf{\(\mu_\beta\)}:\\
+  \includegraphics{Gibbs_algotithm_files/figure-latex/unnamed-chunk-17-1.pdf}
+\end{itemize}
+
+Podemos ver como rápidamente los parámetros convergen al resultado final
+sin necesidad de muchas iteraciones.
+
+\subsection{Inferencias}\label{inferencias}
+
+\subsubsection{\texorpdfstring{Inferencias sobe el parámetro del término
+independiente
+(\(\alpha\)):}{Inferencias sobe el parámetro del término independiente (\textbackslash{}alpha):}}\label{inferencias-sobe-el-parametro-del-termino-independiente-alpha}
+
+Bandas de credibilidad del 95 \% para alpha: Bandas de confianza para
+:\\
+\[\alpha_i \sim Normal(\mu_\alpha,\sigma_\alpha^2),\;\;\;i = 1..30\]
+Cuantiles de \(\alpha_i\) 0.025 y 0.0975.\\
+Podemos decir con una credibilidad del 95 \% que los valores de
+\(\alpha_i\) para cada una de las 30 ratas están entre:
+
+\begin{verbatim}
+##            2.5%    97.5%
+## rata1  239.6873 241.6172
+## rata2  247.9963 249.9278
+## rata3  252.7677 254.7505
+## rata4  232.1745 234.1012
+## rata5  231.2383 233.0864
+## rata6  249.9678 251.9364
+## rata7  228.0143 230.0301
+## rata8  248.5658 250.6925
+## rata9  284.7312 286.7944
+## rata10 218.3562 220.4841
+## rata11 258.7564 260.7256
+## rata12 227.5919 229.6565
+## rata13 242.3678 244.3364
+## rata14 269.0845 271.0207
+## rata15 242.7306 244.7709
+## rata16 245.2914 247.3241
+## rata17 231.7535 233.7130
+## rata18 240.4152 242.2092
+## rata19 254.2077 256.0408
+## rata20 241.5127 243.5379
+## rata21 248.7344 250.6350
+## rata22 224.5199 226.4404
+## rata23 228.0738 229.9363
+## rata24 245.1106 247.0782
+## rata25 234.0993 236.1159
+## rata26 254.2744 256.1833
+## rata27 254.6714 256.7125
+## rata28 243.0196 244.8288
+## rata29 216.9257 219.0321
+## rata30 241.4361 243.2993
+\end{verbatim}
+
+Un gráfico que puede representar esto sería:\\
+Donde se representa el Intervalo como una línea recta sólida horizontal
+para cada una de las ratas.
+\includegraphics{Gibbs_algotithm_files/figure-latex/unnamed-chunk-19-1.pdf}
+
+\subsubsection{\texorpdfstring{Inferencias sobe el parámetro de la
+pendiente
+(\(\beta\)):}{Inferencias sobe el parámetro de la pendiente (\textbackslash{}beta):}}\label{inferencias-sobe-el-parametro-de-la-pendiente-beta}
+
+Bandas de credibilidad del 95 \% para beta: Bandas de confianza para :\\
+\[\beta_i \sim Normal(\mu_\beta,\sigma_\beta^2),\;\;\;i = 1..30\]
+Cuantiles de \(\beta_i\) 0.025 y 0.0975.\\
+Podemos decir con una credibilidad del 95 \% que los valores de
+\(\beta_i\) para cada una de las 30 ratas están entre:
+
+\begin{verbatim}
+##            2.5%    97.5%
+## rata1  5.941213 6.110255
+## rata2  7.217817 7.393778
+## rata3  6.487011 6.657705
+## rata4  5.007271 5.187800
+## rata5  6.582354 6.767558
+## rata6  6.093528 6.247949
+## rata7  5.832258 6.016020
+## rata8  6.399591 6.561040
+## rata9  7.221016 7.392690
+## rata10 5.654192 5.835333
+## rata11 6.895403 7.064241
+## rata12 6.015129 6.189008
+## rata13 6.071157 6.250649
+## rata14 6.751769 6.922693
+## rata15 5.102056 5.274068
+## rata16 5.763167 5.937231
+## rata17 6.206849 6.394546
+## rata18 5.661884 5.829917
+## rata19 6.382256 6.566349
+## rata20 5.932988 6.100664
+## rata21 6.380836 6.567719
+## rata22 5.677527 5.845677
+## rata23 5.535479 5.699236
+## rata24 5.720397 5.894920
+## rata25 7.038274 7.215053
+## rata26 6.563770 6.738794
+## rata27 5.728034 5.896947
+## rata28 5.666596 5.835430
+## rata29 5.430226 5.600996
+## rata30 6.034870 6.190590
+\end{verbatim}
+
+Un gráfico que puede representar esto sería:\\
+Donde se representa el Intervalo como una línea recta sólida horizontal
+para cada una de las ratas.
+\includegraphics{Gibbs_algotithm_files/figure-latex/unnamed-chunk-21-1.pdf}
+
+
+\end{document}

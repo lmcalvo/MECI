@@ -1,0 +1,75 @@
+---
+title: "MovieLens: ejemplo de filtrado colaborativo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sistemas de recomendación: regularización espectral
+
+```{r, message =FALSE}
+library(softImpute)
+```
+
+## Estudio de la matriz 100k
+
+```{r}
+# lectura
+dBrut=read.csv("ml-ratings100k.csv")
+```
+
+```{r}
+# extracción de conjunto test y conjunto train
+dTestInd=sample(nrow(dBrut),nrow(dBrut)/10,replace=FALSE)
+dTest=dBrut[dTestInd,1:3]
+dTrain=dBrut[-dTestInd,1:3]
+```
+
+```{r}
+# Formato de matriz incompleta (dispersa)
+dTrainSparse=Incomplete(dTrain$userId,dTrain$movieId,dTrain$rating)
+# llamada a la función softimpute
+res=softImpute(dTrainSparse,rank.max=4,type="als",lambda=0.5,maxit=200)
+# completado
+recom=impute(res,dTest[,1],dTest[,2])
+```
+
+```{r}
+sqrt(mean((dTest[,3]-recom)**2))
+```
+
+```{r}
+# extracción de conjunto test y conjunto train
+cvSoftImpute <- function(datos = dBrut, lambda_nueva){
+  cat("  Comienzo validación cruzada\n")
+  set.seed(1)
+  Folds <- 5            
+  datos$kfold <- sample(1:Folds, nrow(datos), replace = T)
+  error <- rep(99999.99,Folds)
+  cat("  Fold: ")
+  for (i in 1:Folds) {
+    cat(i," ")
+    Test <- subset(datos, kfold  == i)
+    Entrenamiento <- subset(datos, !kfold == i)
+    dTrainSparse = Incomplete(Entrenamiento$userId,Entrenamiento$movieId,Entrenamiento$rating)
+    res=softImpute(dTrainSparse,rank.max=4,type="als",lambda=lambda_nueva,maxit=200)
+    recom=impute(res,Test[,1],Test[,2]);recom[recom>5]=5;recom[recom<0]=0
+    error[i] = sqrt(mean((Test[,3]-recom)**2))
+  }
+  cat("\n")
+  return(mean(error))
+}
+lambda = 99
+error = 999.99
+for(i in seq(0,2,by = 0.1)){
+  error_nuevo = cvSoftImpute(lambda_nueva=i)
+  if(error>error_nuevo){
+    error = error_nuevo
+    lambda = i
+  }
+}
+cat("Lambda: ",lambda)
+cat("Error: ",error)
+```
